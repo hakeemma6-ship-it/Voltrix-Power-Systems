@@ -1,0 +1,6 @@
+{
+  "name": "VOLTRIX Power Systems",
+  "description": "Voltrix is a Power Solutions Platform, Technical Guidance Portal, Product Discovery Platform, and Industrial Power Consultation Network helping users compare, evaluate, and connect with suitable power protection solution providers.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

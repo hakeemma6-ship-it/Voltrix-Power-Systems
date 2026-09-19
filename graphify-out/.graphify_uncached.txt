@@ -1,0 +1,77 @@
+C:\Project\voltrix-power-systems\.github\workflows\deploy.yml
+C:\Project\voltrix-power-systems\README.md
+C:\Project\voltrix-power-systems\docs\whatsapp_templates.md
+C:\Project\voltrix-power-systems\infrastructure\DISASTER_RECOVERY.md
+C:\Project\voltrix-power-systems\infrastructure\docker-compose.yml
+C:\Project\voltrix-power-systems\public\robots.txt
+C:\Project\voltrix-power-systems\public\Images\Software-Development-Deployment-and-Maintenance-Agreement (1).pdf
+C:\Project\voltrix-power-systems\public\Images\Software-Development-Deployment-and-Maintenance-Agreement.pdf
+C:\Project\voltrix-power-systems\public\Images\Voltrix_Power_Systems_Catalog.pdf
+C:\Project\voltrix-power-systems\public\Battery.png
+C:\Project\voltrix-power-systems\public\Images\1_1.png
+C:\Project\voltrix-power-systems\public\Images\1_2.png
+C:\Project\voltrix-power-systems\public\Images\1_3.png
+C:\Project\voltrix-power-systems\public\Images\3_0.png
+C:\Project\voltrix-power-systems\public\Images\3_1.png
+C:\Project\voltrix-power-systems\public\Images\3_2.png
+C:\Project\voltrix-power-systems\public\Images\3_3.png
+C:\Project\voltrix-power-systems\public\Images\3_5.png
+C:\Project\voltrix-power-systems\public\Images\3_6.png
+C:\Project\voltrix-power-systems\public\Images\Air Cooled Stabilizer.png
+C:\Project\voltrix-power-systems\public\Images\ChatGPT Image Aug 16, 2026, 05_45_53 AM.png
+C:\Project\voltrix-power-systems\public\Images\ChatGPT Image Aug 29, 2026, 09_53_28 PM.png
+C:\Project\voltrix-power-systems\public\Images\ChatGPT Image Aug 7, 2026, 06_57_25 PM.png
+C:\Project\voltrix-power-systems\public\Images\Commercial Inverter.png
+C:\Project\voltrix-power-systems\public\Images\Custom Stabilizer.png
+C:\Project\voltrix-power-systems\public\Images\Gemini_Generated_Image_2oc62c2oc62c2oc6.png
+C:\Project\voltrix-power-systems\public\Images\Gemini_Generated_Image_h6rzorh6rzorh6rz.png
+C:\Project\voltrix-power-systems\public\Images\Gemini_Generated_Image_lxsbh3lxsbh3lxsb (1).png
+C:\Project\voltrix-power-systems\public\Images\Gemini_Generated_Image_lxsbh3lxsbh3lxsb.png
+C:\Project\voltrix-power-systems\public\Images\Generator Battery.png
+C:\Project\voltrix-power-systems\public\Images\Grid Tie Solar System.png
+C:\Project\voltrix-power-systems\public\Images\High Capacity Inverter.png
+C:\Project\voltrix-power-systems\public\Images\High Frequency UPS.png
+C:\Project\voltrix-power-systems\public\Images\Hybrid Inverter.png
+C:\Project\voltrix-power-systems\public\Images\Hybrid Solar System.png
+C:\Project\voltrix-power-systems\public\Images\IGBT UPS.png
+C:\Project\voltrix-power-systems\public\Images\Industrial Online UPS.png
+C:\Project\voltrix-power-systems\public\Images\Inverter Battery.png
+C:\Project\voltrix-power-systems\public\Images\Lithium Batteries.png
+C:\Project\voltrix-power-systems\public\Images\Modular UPS.png
+C:\Project\voltrix-power-systems\public\Images\OFF-Grid Solar System.png
+C:\Project\voltrix-power-systems\public\Images\ON-Grid Solar System.png
+C:\Project\voltrix-power-systems\public\Images\Oil Cooled Stabilizer.png
+C:\Project\voltrix-power-systems\public\Images\Pure Sine Wave Inverter.png
+C:\Project\voltrix-power-systems\public\Images\SMF Batteries.png
+C:\Project\voltrix-power-systems\public\Images\Single Phase Online UPS.png
+C:\Project\voltrix-power-systems\public\Images\Single Phase Stabilizer.png
+C:\Project\voltrix-power-systems\public\Images\Smart Digital Inverter.png
+C:\Project\voltrix-power-systems\public\Images\Solar Inverter.png
+C:\Project\voltrix-power-systems\public\Images\Solar Storage Batteries.png
+C:\Project\voltrix-power-systems\public\Images\Square Wave Inverter.png
+C:\Project\voltrix-power-systems\public\Images\Three Phase Online UPS.png
+C:\Project\voltrix-power-systems\public\Images\Three Phase Stabilizer.png
+C:\Project\voltrix-power-systems\public\Images\Tower Type UPS.png
+C:\Project\voltrix-power-systems\public\Images\VRLA Batteries.png
+C:\Project\voltrix-power-systems\public\Images\customer_welcome_portal.png
+C:\Project\voltrix-power-systems\public\Images\cvt.png
+C:\Project\voltrix-power-systems\public\Images\dealer_registration_received.png
+C:\Project\voltrix-power-systems\public\Images\oil_3.png
+C:\Project\voltrix-power-systems\public\Images\oil_cooled.jpeg
+C:\Project\voltrix-power-systems\public\Inverter.png
+C:\Project\voltrix-power-systems\public\industrial_solar_new.png
+C:\Project\voltrix-power-systems\public\logo.png
+C:\Project\voltrix-power-systems\public\uploads\invoices\deal_1789479898345_sf4ck_cevnc2.jpg
+C:\Project\voltrix-power-systems\public\uploads\invoices\deal_1789480623870_818eb_10kva_aircooled0.png
+C:\Project\voltrix-power-systems\public\uploads\invoices\deal_1789576033893_g2tmq_arsh1.jpg
+C:\Project\voltrix-power-systems\src\assets\images\Batteries.png
+C:\Project\voltrix-power-systems\src\assets\images\First_Slider.png
+C:\Project\voltrix-power-systems\src\assets\images\Solar.webp
+C:\Project\voltrix-power-systems\src\assets\images\Stabilizer.png
+C:\Project\voltrix-power-systems\src\assets\images\UPS.jpg
+C:\Project\voltrix-power-systems\src\assets\images\industrial_solar_new.png
+C:\Project\voltrix-power-systems\src\assets\images\regenerated_image_1779537341364.jpg
+C:\Project\voltrix-power-systems\src\assets\images\regenerated_image_1779537351780.jpg
+C:\Project\voltrix-power-systems\src\assets\images\regenerated_image_1780667370317.png
+C:\Project\voltrix-power-systems\src\assets\images\regenerated_image_1780667763552.png
+C:\Project\voltrix-power-systems\src\assets\images\regenerated_image_1780680194368.png

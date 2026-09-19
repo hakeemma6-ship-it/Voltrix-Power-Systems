@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  voltrix-app:
+    build:
+      context: ../
+      dockerfile: infrastructure/Dockerfile
+    container_name: voltrix_production_container
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - MONGOURI=${MONGOURI}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    volumes:
+      - voltrix_logs:/app/logs
+      - voltrix_backups:/app/backups
+    # Define hard resource limits to prevent server thrashing or CPU lockup
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  voltrix_logs:
+    driver: local
+  voltrix_backups:
+    driver: local

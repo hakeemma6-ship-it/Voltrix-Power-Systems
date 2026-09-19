@@ -1,0 +1,16 @@
+# Robots.txt for VOLTRIX Power Systems
+# Managed by Fortune Traders, Hyderabad, India
+
+User-agent: *
+Allow: /
+Allow: /src/assets/images/
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /b2b/status/
+
+# Host preference
+Host: https://voltrixsystems.com
+
+# XML Sitemap
+Sitemap: https://voltrixsystems.com/sitemap.xml

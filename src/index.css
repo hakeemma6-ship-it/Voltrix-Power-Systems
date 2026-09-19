@@ -1,0 +1,445 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-brand-green: #22C55E;
+  --color-brand-green-hover: #16a34a;
+  --color-brand-navy: #0A2342;
+  --color-brand-charcoal: #1E293B;
+  --color-brand-gray: #F5F7FA;
+}
+
+/* Customized utility animations */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(0.6deg);
+  }
+}
+
+.animate-float {
+  animation: float 5.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 24px rgba(6, 182, 212, 0.6)) drop-shadow(0 0 15px rgba(16, 185, 129, 0.4));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Geometric balance background dot pattern */
+.bg-grid-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-grid-dots-dark {
+  background-image: radial-gradient(rgba(15, 23, 42, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Custom shadow effects - sharper for Geometric Balance */
+.shadow-geom {
+  box-shadow: 4px 4px 0px 0px rgba(15, 23, 42, 1);
+}
+
+.shadow-geom-blue {
+  box-shadow: 4px 4px 0px 0px rgba(30, 58, 138, 1);
+}
+
+.shadow-geom-amber {
+  box-shadow: 4px 4px 0px 0px rgba(217, 119, 6, 1);
+}
+
+@media (max-width: 768px) {
+
+  .mobile-menu,
+  .sidebar-menu {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 140px;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+
+  .mobile-menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: 120px;
+  }
+
+  .dealer-area-btn,
+  .admin-desk-btn {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+}
+
+/* Premium Cinematic Background System */
+@keyframes breathe {
+
+  0%,
+  100% {
+    transform: scale(1) translate(-50%, -50%);
+    opacity: 0.85;
+  }
+
+  50% {
+    transform: scale(1.15) translate(-45%, -45%);
+    opacity: 1;
+  }
+}
+
+@keyframes streak-move-1 {
+  0% {
+    transform: translate(-30%, -30%) rotate(-35deg);
+    opacity: 0.08;
+  }
+
+  50% {
+    transform: translate(-10%, -10%) rotate(-32deg);
+    opacity: 0.22;
+  }
+
+  100% {
+    transform: translate(-30%, -30%) rotate(-35deg);
+    opacity: 0.08;
+  }
+}
+
+@keyframes streak-move-2 {
+  0% {
+    transform: translate(10%, 10%) rotate(-35deg);
+    opacity: 0.12;
+  }
+
+  50% {
+    transform: translate(30%, 30%) rotate(-38deg);
+    opacity: 0.04;
+  }
+
+  100% {
+    transform: translate(10%, 10%) rotate(-35deg);
+    opacity: 0.12;
+  }
+}
+
+@keyframes fog-drift {
+
+  0%,
+  100% {
+    transform: scale(1) translate(0px, 0px);
+    opacity: 0.15;
+  }
+
+  50% {
+    transform: scale(1.12) translate(15px, -10px);
+    opacity: 0.25;
+  }
+}
+
+@keyframes particle-drift-up {
+  0% {
+    transform: translateY(110%) translateX(0px);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.25;
+  }
+
+  90% {
+    opacity: 0.25;
+  }
+
+  100% {
+    transform: translateY(-10%) translateX(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-drift-down {
+  0% {
+    transform: translateY(-10%) translateX(0px);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.2;
+  }
+
+  90% {
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: translateY(110%) translateX(-20px);
+    opacity: 0;
+  }
+}
+
+.animate-cinematic-breathe {
+  animation: breathe 10s ease-in-out infinite;
+}
+
+.animate-streak-1 {
+  animation: streak-move-1 16s ease-in-out infinite;
+}
+
+.animate-streak-2 {
+  animation: streak-move-2 20s ease-in-out infinite;
+}
+
+.animate-fog {
+  animation: fog-drift 24s ease-in-out infinite;
+}
+
+.animate-particle-drift-1 {
+  animation: particle-drift-up 14s linear infinite;
+}
+
+.animate-particle-drift-2 {
+  animation: particle-drift-up 20s linear infinite;
+}
+
+.animate-particle-drift-3 {
+  animation: particle-drift-down 17s linear infinite;
+}
+
+@keyframes slide-wave-drift {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-240px);
+  }
+}
+
+@keyframes slide-wave-stabilized {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-200px);
+  }
+}
+
+.animate-slide-wave-drift {
+  animation: slide-wave-drift 6s linear infinite;
+}
+
+.animate-slide-wave-stabilized {
+  animation: slide-wave-stabilized 4s linear infinite;
+}
+
+/* 
+ * Direct, unhashed high-performance background style for the main Voltrix Hero Section.
+ * Completely removes any dark fallback backgrounds, overlays, gradients or black filters.
+ */
+#home-hero {
+  background-color: #FFFFFF !important;
+}
+
+/* 
+ * Professional Mobile Screen Scale & Ergonomics System (< 768px & < 480px)
+ * Compacts oversized text, modals, padding, cards, and inputs
+ * for ultra-sleek, high-density, premium mobile experience.
+ */
+@media (max-width: 768px) {
+
+  /* Restrain oversized display h1, h2, h3 */
+  h1,
+  .text-4xl,
+  .text-5xl,
+  .text-6xl,
+  .text-7xl,
+  .text-\[54px\] {
+    font-size: 1.65rem !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  h2,
+  .text-3xl {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+  }
+
+  h3,
+  .text-2xl {
+    font-size: 1.15rem !important;
+    line-height: 1.3 !important;
+  }
+
+  h4,
+  .text-xl {
+    font-size: 1.05rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Compact Modal Viewports */
+  .fixed.inset-0>div {
+    max-height: 92dvh !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+  }
+
+  /* Tighter Mobile Card & Section Spacing */
+  .p-6,
+  .p-8,
+  .p-10 {
+    padding: 0.95rem !important;
+  }
+
+  .px-6,
+  .px-8,
+  .px-10 {
+    padding-left: 0.95rem !important;
+    padding-right: 0.95rem !important;
+  }
+
+  .py-6,
+  .py-8,
+  .py-10 {
+    padding-top: 0.95rem !important;
+    padding-bottom: 0.95rem !important;
+  }
+
+  .space-y-6>*+* {
+    margin-top: 0.95rem !important;
+  }
+
+  /* Form Input Sizing for Mobile Touch */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 0.875rem !important;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+  }
+
+  /* Mobile Tables - Ensure compact fonts and scrollability */
+  table th,
+  table td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+
+  /* Restrain even further for ultra small mobile displays */
+  h1,
+  .text-4xl,
+  .text-5xl,
+  .text-6xl,
+  .text-7xl,
+  .text-\[54px\] {
+    font-size: 1.4rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2,
+  .text-3xl {
+    font-size: 1.2rem !important;
+    line-height: 1.25 !important;
+  }
+
+  h3,
+  .text-2xl {
+    font-size: 1.05rem !important;
+    line-height: 1.3 !important;
+  }
+
+  h4,
+  .text-xl {
+    font-size: 0.95rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Ultra compact padding on tiny screens */
+  .p-6,
+  .p-8,
+  .p-10 {
+    padding: 0.75rem !important;
+  }
+
+  .px-6,
+  .px-8,
+  .px-10 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .py-6,
+  .py-8,
+  .py-10 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+}
+
+/* ─── Accessibility & Color Contrast Enhancements ─── */
+.text-slate-400 {
+  color: #475569 !important;
+  /* Forces slate-600 color contrast (> 4.5:1 ratio) */
+}
+
+input::placeholder,
+textarea::placeholder,
+.placeholder\:text-slate-400::placeholder {
+  color: #64748b !important;
+  /* Softer slate-500 for placeholder prompts */
+}
