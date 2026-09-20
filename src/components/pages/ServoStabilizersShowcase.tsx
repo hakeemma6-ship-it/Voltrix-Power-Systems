@@ -360,7 +360,7 @@ export default function ServoStabilizersShowcase({
                         setImageLoading(prev => ({ ...prev, [productId]: false }));
                         const target = e.currentTarget;
                         if (!target.src.includes('Oil%20Cooled') && !target.src.includes('Stabilizer')) {
-                          target.src = '/Images/Oil Cooled Stabilizer.png';
+                          target.src = 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866584/voltrix_power_systems/Oil_Cooled_Stabilizer.png';
                         }
                       }}
                       className={`max-h-full max-w-full object-contain transition-all duration-300 group-hover:scale-105 ${

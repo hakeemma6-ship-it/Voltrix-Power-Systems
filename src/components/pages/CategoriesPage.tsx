@@ -256,7 +256,7 @@ export default function CategoriesPage({ currentHash, onNavigate }: CategoriesPa
                     onError={(e) => {
                       const target = e.currentTarget;
                       if (!target.src.includes('Oil%20Cooled') && !target.src.includes('Stabilizer')) {
-                        target.src = '/Images/Oil Cooled Stabilizer.png';
+                        target.src = 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866584/voltrix_power_systems/Oil_Cooled_Stabilizer.png';
                       }
                     }}
                     className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500"

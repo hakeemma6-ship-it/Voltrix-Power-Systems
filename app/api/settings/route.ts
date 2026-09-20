@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         const publicSettings = {
             id: settings.id || 'company_settings',
             companyName: settings.companyName || 'Voltrix Power Systems',
-            logo: settings.logo || '/logo.png',
+            logo: settings.logo || 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png',
             address: settings.address || '',
             phone: settings.phone || '',
             email: settings.email || '',

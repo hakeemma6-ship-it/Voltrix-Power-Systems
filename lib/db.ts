@@ -69,7 +69,7 @@ const SEED_DB: DbShape = {
     settings: [{
         id: 'company_settings',
         companyName: 'Voltrix Power Systems',
-        logo: '/logo.png',
+        logo: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png',
         address: '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad - 500043',
         phone: '+91 90323 72136 | +91 73867 10160',
         email: 'voltrixpowersystems@gmail.com',
@@ -125,7 +125,7 @@ if (db) {
         db.settings = [{
             id: 'company_settings',
             companyName: 'Voltrix Power Systems',
-            logo: '/logo.png',
+            logo: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png',
             address: '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad - 500043',
             phone: '+91 90323 72136 | +91 73867 10160',
             email: 'voltrixpowersystems@gmail.com',

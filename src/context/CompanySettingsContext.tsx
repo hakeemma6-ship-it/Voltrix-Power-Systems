@@ -23,7 +23,7 @@ export interface CompanySettings {
 
 export const defaultCompanySettings: CompanySettings = {
   companyName: 'Voltrix Power Systems',
-  logo: '/logo.png',
+  logo: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png',
   address: '',
   phone: '',
   email: '',

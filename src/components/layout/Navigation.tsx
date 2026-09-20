@@ -194,7 +194,7 @@ export function Navbar({
               id="nav-logo"
             >
               <Image
-                src="/logo.png"
+                src='https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png'
                 alt="Voltrix Logo"
                 width={127}
                 height={48}

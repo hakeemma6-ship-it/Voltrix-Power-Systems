@@ -40,7 +40,7 @@ export const productDatabase: ProductDatabaseType = {
   'cvt-master': {
     '1': {
       price: "Request Quote",
-      image: 'images/cvt.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866543/voltrix_power_systems/cvt.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '1 KVA' },
@@ -62,7 +62,7 @@ export const productDatabase: ProductDatabaseType = {
   'oil-master': {
     '100': {
       price: "10",
-      image: 'images/oil_cooled.jpeg',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '100 KVA' },
@@ -85,7 +85,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '150': {
       price: "10",
-      image: 'images/oil_cooled.jpeg',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '150 KVA' },
@@ -108,7 +108,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '200': {
       price: "10",
-      image: 'images/oil_cooled.jpeg',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '200 KVA' },
@@ -131,7 +131,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '250': {
       price: "10",
-      image: 'images/oil_cooled.jpeg',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '250 KVA' },
@@ -154,7 +154,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '300': {
       price: "10",
-      image: 'images/oil_cooled.jpeg',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '300 KVA' },
@@ -177,7 +177,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '350': {
       price: "10",
-      image: 'images/oil_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866586/voltrix_power_systems/oil_3.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '350 KVA' },
@@ -200,7 +200,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '400': {
       price: "10",
-      image: 'images/oil_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866586/voltrix_power_systems/oil_3.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '400 KVA' },
@@ -223,7 +223,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '450': {
       price: "10",
-      image: 'images/oil_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866586/voltrix_power_systems/oil_3.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '450 KVA' },
@@ -246,7 +246,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '500': {
       price: "10",
-      image: 'images/oil_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866586/voltrix_power_systems/oil_3.png',
       specs: [
         { label: 'Brand', value: 'Cyber' },
         { label: 'Power', value: '500 KVA' },
@@ -272,7 +272,7 @@ export const productDatabase: ProductDatabaseType = {
   'air-master': {
     '10': {
       price: "10",
-      image: 'images/3_0.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866517/voltrix_power_systems/3_0.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -295,7 +295,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '15': {
       price: "10",
-      image: 'images/3_0.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866517/voltrix_power_systems/3_0.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -318,7 +318,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '20': {
       price: "10",
-      image: 'images/3_1.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866518/voltrix_power_systems/3_1.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -341,7 +341,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '25': {
       price: "10",
-      image: 'images/3_1.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866518/voltrix_power_systems/3_1.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -364,7 +364,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '30': {
       price: "10",
-      image: 'images/3_2.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866521/voltrix_power_systems/3_2.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -387,7 +387,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '40': {
       price: "10",
-      image: 'images/3_2.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866521/voltrix_power_systems/3_2.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -410,7 +410,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '45': {
       price: "10",
-      image: 'images/3_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866522/voltrix_power_systems/3_3.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -433,7 +433,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '50': {
       price: "10",
-      image: 'images/3_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866522/voltrix_power_systems/3_3.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -456,7 +456,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '60': {
       price: "10",
-      image: 'images/3_5.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866525/voltrix_power_systems/3_5.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -479,7 +479,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '75': {
       price: "10",
-      image: 'images/3_5.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866525/voltrix_power_systems/3_5.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -502,7 +502,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '90': {
       price: "10",
-      image: 'images/3_6.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866526/voltrix_power_systems/3_6.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -525,7 +525,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '100': {
       price: "10",
-      image: 'images/3_6.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866526/voltrix_power_systems/3_6.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -551,7 +551,7 @@ export const productDatabase: ProductDatabaseType = {
   'iso-master': {
     '1': {
       price: "10",
-      image: 'images/1_1.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866511/voltrix_power_systems/1_1.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -576,7 +576,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '2': {
       price: "10",
-      image: 'images/1_1.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866511/voltrix_power_systems/1_1.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -601,7 +601,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '3': {
       price: "10",
-      image: 'images/1_2.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866513/voltrix_power_systems/1_2.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -626,7 +626,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '5': {
       price: "10",
-      image: 'images/1_2.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866513/voltrix_power_systems/1_2.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -651,7 +651,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '7.5': {
       price: "10",
-      image: 'images/1_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866515/voltrix_power_systems/1_3.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -676,7 +676,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '10': {
       price: "10",
-      image: 'images/1_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866515/voltrix_power_systems/1_3.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -701,7 +701,7 @@ export const productDatabase: ProductDatabaseType = {
     },
     '15': {
       price: "10",
-      image: 'images/1_3.png',
+      image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866515/voltrix_power_systems/1_3.png',
       specs: [
         { label: 'Minimum Order Quantity', value: '1' },
         { label: 'Brand', value: 'Cyber' },
@@ -775,7 +775,7 @@ export const masterConfig: Record<string, MasterProductConfig> = {
  * Resolves safe image URL, ensuring leading slash for Next.js public folder serving
  */
 export function resolveImageUrl(imgPath: string): string {
-  if (!imgPath) return '/Images/Oil Cooled Stabilizer.png';
+  if (!imgPath) return 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866584/voltrix_power_systems/Oil_Cooled_Stabilizer.png';
   if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) return imgPath;
   if (imgPath.startsWith('/')) return imgPath;
   return `/${imgPath}`;
@@ -830,7 +830,7 @@ export const MASTER_STABILIZER_CARDS: MasterStabilizerCardInfo[] = [
     description: 'Heavy-duty industrial voltage stabilizers submerged in thermal premium dielectric cooling oil to support continuous heavy loads up to 500 kVA.',
     inputRange: '340V - 480V',
     capacityRange: '100 - 500 KVA',
-    image: '/images/oil_cooled.jpeg',
+    image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866589/voltrix_power_systems/oil_cooled.png',
     phase: 'Three Phase',
     cooling: 'Oil Immersed',
     variantsCount: 9
@@ -843,7 +843,7 @@ export const MASTER_STABILIZER_CARDS: MasterStabilizerCardInfo[] = [
     description: 'High precision air cooled three-phase stabilizers with digital microcontroller precision for commercial lines, servers, and printing presses.',
     inputRange: '340V - 480V',
     capacityRange: '10 - 100 KVA',
-    image: '/images/3_0.png',
+    image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866517/voltrix_power_systems/3_0.png',
     phase: 'Three Phase',
     cooling: 'Air Cooled',
     variantsCount: 12
@@ -856,7 +856,7 @@ export const MASTER_STABILIZER_CARDS: MasterStabilizerCardInfo[] = [
     description: 'Microprocessor-controlled single phase stabilizers engineered for residential main lines, deep freezers, laboratories, and sensitive electronics.',
     inputRange: '160V - 260V',
     capacityRange: '1 - 15 KVA',
-    image: '/images/1_1.png',
+    image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866511/voltrix_power_systems/1_1.png',
     phase: 'Single Phase',
     cooling: 'Air Cooled',
     variantsCount: 7
@@ -869,7 +869,7 @@ export const MASTER_STABILIZER_CARDS: MasterStabilizerCardInfo[] = [
     description: 'Ferro-resonant constant voltage transformers providing instantaneous voltage regulation, noise filtering, and spike suppression.',
     inputRange: '170V - 270V',
     capacityRange: '1 KVA',
-    image: '/images/cvt.png',
+    image: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866543/voltrix_power_systems/cvt.png',
     phase: 'Single Phase',
     cooling: 'Air Cooled',
     variantsCount: 1

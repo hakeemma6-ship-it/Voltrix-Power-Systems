@@ -10,7 +10,7 @@ interface Props {
 export default function CompanySettingsTab({ onSettingsSaved }: Props) {
     const [settings, setSettings] = useState<any>({
         companyName: 'Voltrix Power Systems',
-        logo: '/logo.png',
+        logo: 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png',
         address: '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad - 500043',
         phone: '+91 90323 72136 | +91 73867 10160',
         email: 'voltrixpowersystems@gmail.com',
@@ -166,7 +166,7 @@ export default function CompanySettingsTab({ onSettingsSaved }: Props) {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-slate-505 uppercase tracking-wider mb-1">Company Web URL</label>
-                                <input type="url" className={inputCls} value={settings.logo || '/logo.png'} onChange={e => setSettings({ ...settings, logo: e.target.value })} placeholder="/logo.png" />
+                                <input type="url" className={inputCls} value={settings.logo || 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png'} onChange={e => setSettings({ ...settings, logo: e.target.value })} placeholder='https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866628/voltrix_power_systems/logo.png' />
                             </div>
                         </div>
                     </div>
