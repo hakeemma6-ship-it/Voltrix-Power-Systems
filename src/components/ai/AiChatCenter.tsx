@@ -310,7 +310,7 @@ export function DedicatedAiSupport({
     } catch (err: any) {
       const isCustomer = activeSession?.role === 'customer';
       const maintenanceMsg = isCustomer
-        ? "AI is under Maintainance. For more queries contact our manual customer care support team:\n\n📞 +91 90323 72136\n📞 +91 73867 10160\n✉️ fortunetraders313@gmail.com\n\n[YouTube](https://www.youtube.com/@VoltrixPowerSystems) | [Facebook](https://www.facebook.com/profile.php?id=61592899555120) | [Instagram](https://www.instagram.com/voltrixpowersystems/)"
+        ? "AI is under Maintainance. For more queries contact our manual customer care support team:\n\n📞 +91 90323 72136\n📞 +91 73867 10160\n✉️ voltrixpowersystems@gmail.com\n\n[YouTube](https://www.youtube.com/@VoltrixPowerSystems) | [Facebook](https://www.facebook.com/profile.php?id=61592899555120) | [Instagram](https://www.instagram.com/voltrixpowersystems/)"
         : "AI is in Maintainance and it will be fixed soon.";
 
       setMessages(p => [...p, { role: 'model', text: maintenanceMsg }]);

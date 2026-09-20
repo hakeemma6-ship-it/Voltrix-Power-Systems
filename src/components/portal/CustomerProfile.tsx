@@ -1062,9 +1062,9 @@ export default function CustomerProfile({ customerSession, onLogout, onUpdateSes
                                     <div className="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1.5 shadow-2xs">
                                         <span className="text-[8.5px] font-bold text-blue-700 uppercase tracking-wider block">Primary Admin Email</span>
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="font-mono font-bold text-slate-900 text-[11px] truncate" title="fortunetraders6@gmail.com">fortunetraders6@gmail.com</span>
+                                            <span className="font-mono font-bold text-slate-900 text-[11px] truncate" title="voltrixpowersystems@gmail.com">voltrixpowersystems@gmail.com</span>
                                             <a
-                                                href="mailto:fortunetraders6@gmail.com"
+                                                href="mailto:voltrixpowersystems@gmail.com"
                                                 className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer no-underline shrink-0"
                                             >
                                                 <Mail className="h-3 w-3" /> Mail
@@ -1075,9 +1075,9 @@ export default function CustomerProfile({ customerSession, onLogout, onUpdateSes
                                     <div className="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1.5 shadow-2xs">
                                         <span className="text-[8.5px] font-bold text-blue-700 uppercase tracking-wider block">Technical Support Desk</span>
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="font-mono font-bold text-slate-900 text-[11px] truncate" title="support@voltrixpower.com">support@voltrixpower.com</span>
+                                            <span className="font-mono font-bold text-slate-900 text-[11px] truncate" title="voltrixpowersystems@gmail.com">voltrixpowersystems@gmail.com</span>
                                             <a
-                                                href="mailto:support@voltrixpower.com"
+                                                href="mailto:voltrixpowersystems@gmail.com"
                                                 className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer no-underline shrink-0"
                                             >
                                                 <Mail className="h-3 w-3" /> Mail

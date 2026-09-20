@@ -13,7 +13,7 @@ export default function CompanySettingsTab({ onSettingsSaved }: Props) {
         logo: '/logo.png',
         address: '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad - 500043',
         phone: '+91 90323 72136 | +91 73867 10160',
-        email: 'sales@voltrixpower.com',
+        email: 'voltrixpowersystems@gmail.com',
         gstin: '36AEPPI5022R1ZY',
         state: 'Telangana',
         stateCode: '36',

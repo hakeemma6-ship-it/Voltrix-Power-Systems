@@ -283,7 +283,7 @@ Respond with ONLY valid JSON: {"intent": "THE_INTENT", "orderId": "optional_id_o
                 `🔒 *Security Notice:* Order details and invoices are strictly protected and only accessible from verified customer phone numbers.\n\n` +
                 `*How can we help you?*\n` +
                 `• *Products:* Ask about our Servo Stabilizers, Online UPS, Inverters & Solar Solutions.\n` +
-                `• *Support & Onboarding:* Contact our team at *sales@voltrixpower.com* or call *+91 90323 72136*.\n` +
+                `• *Support & Onboarding:* Contact our team at *voltrixpowersystems@gmail.com* or call *+91 90323 72136*.\n` +
                 `• *Website:* https://voltrixpower.com`;
 
             await WhatsAppService.sendTextMessage(from, guestMsg);
@@ -433,7 +433,7 @@ Respond with ONLY valid JSON: {"intent": "THE_INTENT", "orderId": "optional_id_o
                     } else {
                         replyText +=
                             `The PDF file is being prepared by our billing department.\n` +
-                            `For immediate assistance, email *accounts@voltrixpower.com* quoting Invoice No *${doc.invoiceNumber}*.`;
+                            `For immediate assistance, email *voltrixpowersystems@gmail.com* quoting Invoice No *${doc.invoiceNumber}*.`;
                     }
                 }
                 break;
@@ -444,7 +444,7 @@ Respond with ONLY valid JSON: {"intent": "THE_INTENT", "orderId": "optional_id_o
                     `📞 *Voltrix Customer Support*\n\n` +
                     `We are here to assist you!\n\n` +
                     `• *Direct Helpline:* +91 90323 72136 | +91 73867 10160\n` +
-                    `• *Email:* support@voltrixpower.com / sales@voltrixpower.com\n` +
+                    `• *Email:* voltrixpowersystems@gmail.com\n` +
                     `• *Working Hours:* Mon - Sat, 9:00 AM - 7:00 PM IST\n` +
                     `• *Corporate Address:* Gandi Maisamma X Road, Hyderabad - 500043\n\n` +
                     `Feel free to reply anytime with *"Show my orders"*, *"Where is my latest order?"*, or *"Show my inquiries"*.`;

@@ -420,8 +420,18 @@ function PrivacyPolicyContent() {
                   <li><strong>Opt Out of Marketing:</strong> Request to stop receiving non-transactional marketing communications at any time.</li>
                 </ul>
                 <p className="text-slate-650 text-sm leading-relaxed mt-2">
-                  To submit a privacy or data request, please email our support desk at <strong className="text-slate-900">[SUPPORT EMAIL]</strong> (or <strong>sales@voltrixpower.com</strong>) with the subject line <em>&quot;Privacy Rights Request&quot;</em>. We will verify your identity and respond within a reasonable business timeframe.
+                  To submit a privacy or data request, please email our support desk at <strong className="text-slate-900">voltrixpowersystems@gmail.com</strong> with the subject line <em>&quot;Privacy Rights Request&quot;</em>. We will verify your identity and respond within a reasonable business timeframe.
                 </p>
+
+                <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl mt-3 flex items-start gap-2.5">
+                  <FileText className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="text-xs text-slate-700 leading-relaxed">
+                    <strong>Looking for dedicated Data Deletion instructions?</strong> For Meta/WhatsApp compliance and step-by-step submission guidelines, please visit our official{' '}
+                    <Link href="/data-deletion" className="text-emerald-700 font-bold hover:underline">
+                      Data Deletion Request Page
+                    </Link>.
+                  </div>
+                </div>
               </section>
 
               {/* Section 10 */}
@@ -463,7 +473,9 @@ function PrivacyPolicyContent() {
                   </div>
                   <div className="flex items-center gap-2.5 text-slate-650">
                     <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>sales@voltrixpower.com / [SUPPORT EMAIL]</span>
+                    <a href="mailto:voltrixpowersystems@gmail.com" className="hover:text-emerald-600 transition-colors">
+                      voltrixpowersystems@gmail.com
+                    </a>
                   </div>
                   <div className="flex items-center gap-2.5 text-slate-650">
                     <Shield className="w-4 h-4 text-emerald-600 shrink-0" />

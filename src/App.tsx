@@ -209,6 +209,10 @@ function AppContent() {
         window.location.href = '/terms-and-conditions';
         return;
       }
+      if (hash === '#data-deletion') {
+        window.location.href = '/data-deletion';
+        return;
+      }
       if (hash !== '#login' && hash !== '#home') sessionStorage.setItem('login_redirect_hash', hash);
       setCurrentHash(hash);
       if (hash.startsWith('#blog/')) setActiveSlug(hash.replace('#blog/', ''));

@@ -599,6 +599,11 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
                   Terms & Conditions
                 </a>
               </li>
+              <li>
+                <a href="/data-deletion" className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block">
+                  Data Deletion
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -673,13 +678,17 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
           <div className="flex items-center gap-2 text-center sm:text-left">
             <span>© {currentYear} Voltrix Power Systems. Operated by Fortune Traders. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">
               Privacy Policy
             </a>
             <span className="text-slate-600">•</span>
             <a href="/terms-and-conditions" className="hover:text-emerald-400 transition-colors">
               Terms & Conditions
+            </a>
+            <span className="text-slate-600">•</span>
+            <a href="/data-deletion" className="hover:text-emerald-400 transition-colors">
+              Data Deletion
             </a>
           </div>
         </div>

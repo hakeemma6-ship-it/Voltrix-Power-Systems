@@ -217,7 +217,7 @@ function TermsAndConditionsContent() {
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Notice of Compromise:</strong> You must promptly notify Voltrix at sales@voltrixpower.com if you suspect unauthorized access to your account.</span>
+                    <span><strong>Notice of Compromise:</strong> You must promptly notify Voltrix at voltrixpowersystems@gmail.com if you suspect unauthorized access to your account.</span>
                   </div>
                 </div>
               </section>
@@ -485,7 +485,9 @@ function TermsAndConditionsContent() {
                   </div>
                   <div className="flex items-center gap-2.5 text-slate-650">
                     <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>sales@voltrixpower.com / [SUPPORT EMAIL]</span>
+                    <a href="mailto:voltrixpowersystems@gmail.com" className="hover:text-emerald-600 transition-colors">
+                      voltrixpowersystems@gmail.com
+                    </a>
                   </div>
                   <div className="flex items-center gap-2.5 text-slate-650">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
