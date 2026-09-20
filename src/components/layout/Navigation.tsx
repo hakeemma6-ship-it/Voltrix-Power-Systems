@@ -388,13 +388,13 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
 
             {/* Social Media Links */}
             <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center gap-4">
-              <a href="https://www.youtube.com/@VoltrixPowerSystems" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-300 hover:text-red-500 transition-colors duration-200">
+              <a href="https://www.youtube.com/@VoltrixPowerSystems" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-red-500 transition-colors duration-200">
                 <Youtube className="w-4 h-4" />
               </a>
-              <a href="https://www.facebook.com/profile.php?id=61592899555120" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-300 hover:text-blue-500 transition-colors duration-200">
+              <a href="https://www.facebook.com/profile.php?id=61592899555120" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-500 transition-colors duration-200">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="https://www.instagram.com/voltrixpowersystems/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-300 hover:text-pink-500 transition-colors duration-200">
+              <a href="https://www.instagram.com/voltrixpowersystems/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-pink-500 transition-colors duration-200">
                 <Instagram className="w-4 h-4" />
               </a>
             </div>
@@ -451,10 +451,6 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
 
           {/* Column 3: Premium Interactive Location/Contact Card */}
           <div className="space-y-4 text-left">
-            <h3 className="font-display font-bold text-white uppercase tracking-wider text-xs border-l-2 border-emerald-500 pl-2.5">
-              Hyderabad Hub Office
-            </h3>
-
             {/* Interactive glassmorphism card */}
             <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-4.5 hover:border-emerald-500/40 shadow-xs hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group">
               <div className="space-y-4 relative z-10 font-sans">
@@ -469,7 +465,7 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
                   <MapPin className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5 mr-2.5 animate-pulse" />
                   <div className="text-left">
                     <span className="font-bold text-white group-hover/addr:text-emerald-400 transition-colors leading-relaxed uppercase block">
-                      FORTUNE TRADERS
+                      VOLTRIX POWER SYSTEMS
                     </span>
                     <p className="text-slate-300 font-medium leading-relaxed mt-1 whitespace-pre-line">
                       {companyAddress}
