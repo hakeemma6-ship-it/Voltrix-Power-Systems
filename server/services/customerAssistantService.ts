@@ -18,7 +18,7 @@ import { InquiryService } from './inquiryService';
 import { LogisticsService } from './logisticsService';
 import { PaymentService } from './paymentService';
 import { DocumentService } from './documentService';
-import type { Customer } from '@/types';
+import type { Customer, Dealer } from '@/types';
 
 // Rate limiter & Message Deduplication state
 const phoneRateLimits = new Map<string, { count: number; resetTime: number }>();
@@ -54,6 +54,58 @@ export interface ParsedIntentResult {
 }
 
 export class CustomerAssistantService {
+    /**
+     * Resolves an authorized Voltrix dealer by their registered phone number.
+     * Matches primary phone, altPhone, and whatsappPhone.
+     */
+    public static async findDealerByPhone(rawPhone: string): Promise<Dealer | null> {
+        await ensureDb();
+        const cleanPhone = normalizePhoneNumber(rawPhone);
+        if (!cleanPhone) return null;
+
+        const last10 = cleanPhone.slice(-10);
+
+        // 1. Search in-memory db
+        if (db.dealers && Array.isArray(db.dealers)) {
+            const found = db.dealers.find((d: any) => {
+                const p1 = d.phone ? normalizePhoneNumber(d.phone) : '';
+                const p2 = d.altPhone ? normalizePhoneNumber(d.altPhone) : '';
+                const p3 = d.whatsappPhone ? normalizePhoneNumber(d.whatsappPhone) : '';
+                const p4 = d.mobile ? normalizePhoneNumber(d.mobile) : '';
+                return (
+                    (p1 && p1.endsWith(last10)) ||
+                    (p2 && p2.endsWith(last10)) ||
+                    (p3 && p3.endsWith(last10)) ||
+                    (p4 && p4.endsWith(last10))
+                );
+            });
+            if (found) return found;
+        }
+
+        // 2. Search MongoDB if active
+        if (isMongoReady()) {
+            const mongoDb = getMongoDb();
+            try {
+                const regex = new RegExp(last10);
+                const doc = await mongoDb.collection('dealers').findOne({
+                    $or: [
+                        { phone: regex },
+                        { altPhone: regex },
+                        { whatsappPhone: regex },
+                        { mobile: regex }
+                    ]
+                });
+                if (doc) {
+                    return { ...doc, id: doc._id?.toString() || doc.id };
+                }
+            } catch (err) {
+                console.error('[CustomerAssistantService] Error querying dealer by phone:', err);
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Resolves an authenticated Voltrix customer by their verified WhatsApp sender phone.
      * Prevents data exposure if the number is unverified.
@@ -184,13 +236,17 @@ export class CustomerAssistantService {
         }
 
         if (
-            clean.includes('contact support') ||
-            clean.includes('support') ||
-            clean.includes('human') ||
-            clean.includes('agent') ||
-            clean.includes('help desk') ||
-            clean.includes('phone number') ||
-            clean.includes('representative')
+            !clean.includes('warranty') &&
+            !clean.includes('guarantee') &&
+            (clean.includes('contact support') ||
+                clean.includes('customer support') ||
+                clean.includes('talk to support') ||
+                clean.includes('call support') ||
+                clean.includes('human') ||
+                clean.includes('talk to agent') ||
+                clean.includes('help desk') ||
+                clean.includes('phone number') ||
+                clean.includes('representative'))
         ) {
             return { intent: 'CONTACT_SUPPORT' };
         }
@@ -272,28 +328,50 @@ Respond with ONLY valid JSON: {"intent": "THE_INTENT", "orderId": "optional_id_o
             return { success: true, replyText: limitMsg };
         }
 
-        // 3. Authenticate customer
+        // 3. FIRST CHECK: Is the sender an authorized or registered Dealer?
+        const dealer = await this.findDealerByPhone(from);
+        if (dealer) {
+            const dealerName = dealer.companyName || dealer.name || 'Valued Partner';
+            const isApproved = dealer.status === 'approved';
+
+            const dealerMsg =
+                `👋 *Hello ${dealerName}!* ⚡\n\n` +
+                `We identified your WhatsApp number as a registered Voltrix Dealer Partner.\n\n` +
+                `🤖 *Dealer AI Assistant:* Dedicated commercial and engineering tools—including our AI Load Calculator, custom B2B proposal generator, margin estimator, and technical sizing—are exclusively available for you inside the *Dealers Portal*.\n\n` +
+                `👉 *Please access the AI in your Dealer Portal:*\n` +
+                `🔗 https://voltrixpower.com/#dealer-portal\n\n` +
+                (isApproved
+                    ? `Please log in to your portal and open the *Dealer AI Assistant* tab to calculate sizing, generate proposals, or analyze customer requirements.`
+                    : `_Note: Your dealer application is currently pending admin review. Once approved, you will have full access to the Dealer AI tools._`) +
+                `\n\nFor administrative desk queries, call our operations team at *+91 90323 72136*.`;
+
+            await WhatsAppService.sendTextMessage(from, dealerMsg);
+            return { success: true, replyText: dealerMsg };
+        }
+
+        // 4. SECOND CHECK: Is the sender a Verified Customer?
         const customer = await this.findCustomerByVerifiedPhone(from);
 
-        // If unverified number, do NOT expose customer data
+        // If neither a dealer nor a verified customer, protect confidential data
         if (!customer) {
             const guestMsg =
                 `⚡ *Welcome to Voltrix Power Systems!* ⚡\n\n` +
                 `We could not locate an active Voltrix customer account registered with this WhatsApp number (+${cleanPhone}).\n\n` +
-                `🔒 *Security Notice:* Order details and invoices are strictly protected and only accessible from verified customer phone numbers.\n\n` +
-                `*How can we help you?*\n` +
-                `• *Products:* Ask about our Servo Stabilizers, Online UPS, Inverters & Solar Solutions.\n` +
-                `• *Support & Onboarding:* Contact our team at *voltrixpowersystems@gmail.com* or call *+91 90323 72136*.\n` +
-                `• *Website:* https://voltrixpower.com`;
+                `🔒 *Security Notice:* Confidential order details, delivery tracking, and official invoices are strictly protected and only accessible from verified customer phone numbers.\n\n` +
+                `*How can we assist you?*\n` +
+                `• *Products:* Ask about our Servo Stabilizers (1–2500 kVA), Online UPS (1–500 kVA), Inverters & Solar Solutions.\n` +
+                `• *Get a Quotation / Support:* Contact our sales team at *voltrixpowersystems@gmail.com* or call *+91 90323 72136*.\n` +
+                `• *Dealers:* If you are a dealer applying to join, apply at https://voltrixpower.com/#dealer-register.`;
 
             await WhatsAppService.sendTextMessage(from, guestMsg);
             return { success: true, replyText: guestMsg };
         }
 
+        // 5. User is a VERIFIED CUSTOMER -> Answer queries and give information/results!
         const customerId = customer.id;
         const customerName = customer.name || 'Valued Customer';
 
-        // 4. Classify Intent
+        // Classify Intent
         const parsed = await this.classifyIntent(text);
         let replyText = '';
 
@@ -453,21 +531,167 @@ Respond with ONLY valid JSON: {"intent": "THE_INTENT", "orderId": "optional_id_o
 
             case 'GENERAL_QUERY':
             default: {
-                replyText =
-                    `⚡ *Voltrix Power Assistant*\n\n` +
-                    `Hello *${customerName}*, how can I help you today?\n\n` +
-                    `You can ask me questions like:\n` +
-                    `• *"How many orders do I have?"*\n` +
-                    `• *"Show my orders"*\n` +
-                    `• *"Where is my latest order?"*\n` +
-                    `• *"What's my logistics status?"*\n` +
-                    `• *"Show my inquiries"*\n` +
-                    `• *"Send my invoice"*`;
+                // Verified customer asks a general or product question: give them full answers
+                replyText = await this.answerCustomerGeneralQuery(customer, text);
                 break;
             }
         }
 
         await WhatsAppService.sendTextMessage(from, replyText);
         return { success: true, replyText };
+    }
+
+    /**
+     * Answers product questions, technical sizing, warranty, or company queries for verified customers.
+     */
+    public static async answerCustomerGeneralQuery(customer: Customer, text: string): Promise<string> {
+        const clean = text.toLowerCase().trim();
+        const customerName = customer.name || 'Valued Customer';
+
+        // 1. Simple greetings
+        if (/^(hi|hello|hey|namaste|greetings|start|menu|help)$/i.test(clean)) {
+            return (
+                `⚡ *Hello ${customerName}! Welcome to Voltrix Power Systems.* ⚡\n\n` +
+                `Your WhatsApp number is verified with your customer account.\n\n` +
+                `*How can I assist you today?*\n` +
+                `• *Ask any question:* e.g. _"What servo stabilizer do I need for a 15 HP motor?"_ or _"Tell me about online UPS warranty"_\n` +
+                `• *Orders:* Type *"Show my orders"* or *"Where is my latest order?"*\n` +
+                `• *Invoices:* Type *"Send my invoice"*\n` +
+                `• *Inquiries:* Type *"Show my inquiries"*\n` +
+                `• *Support:* Type *"Contact support"*`
+            );
+        }
+
+        // 2. If Gemini AI is configured, generate an intelligent answer
+        if (ai && process.env.GEMINI_API_KEY) {
+            try {
+                const prompt = `You are the official Voltrix Power Systems WhatsApp Customer Assistant.
+Voltrix Power Systems is a premier manufacturer of industrial power conditioning equipment located in Hyderabad, India.
+Customer Name: ${customerName} (Verified Customer)
+
+PRODUCT & TECHNICAL KNOWLEDGE:
+1. Servo Voltage Stabilizers:
+   - Air-Cooled (1 kVA – 100 kVA): Single & 3-Phase, ±1% output regulation, digital microcontroller, high efficiency (>98%). Ideal for CNC, printing, elevators, residential, hospitals.
+   - Oil-Cooled (15 kVA – 2500 kVA): Heavy-duty 3-Phase balanced & unbalanced. Copper wound, transformer oil cooling, withstands extreme voltage fluctuations (e.g. 300V–470V or 340V–480V).
+2. Online UPS Systems:
+   - True Double Conversion Online UPS: 1 kVA – 500 kVA (1-Phase & 3-Phase). Zero transfer time, IGBT inverter, DSP control, pure sine wave.
+3. Isolation & Ultra-Isolation Transformers:
+   - 1 kVA – 500 kVA, noise attenuation > 120 dB, eliminates harmonics & ground noise.
+4. Solar Power Solutions:
+   - On-Grid, Off-Grid, and Hybrid Solar Inverters and Rooftop Plants.
+5. Warranty & Service Support:
+   - Standard 1-3 years warranty, on-site service, 24/7 technical assistance across India.
+   - Contact: +91 90323 72136 | +91 73867 10160 | voltrixpowersystems@gmail.com
+   - Works: Gandi Maisamma X Road, Hyderabad - 500043.
+
+GUIDELINES:
+- Provide a direct, professional, and clear answer to the customer's question.
+- Format for WhatsApp (*bold*, _italics_, bullet points).
+- Keep length concise (under 200 words).
+- Conclude with a helpful next step.
+
+Customer Question: "${text}"`;
+
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: {
+                        temperature: 0.2,
+                    },
+                });
+
+                const reply = response.text?.trim();
+                if (reply) {
+                    return reply;
+                }
+            } catch (err) {
+                console.warn('[CustomerAssistantService] Gemini AI general query error, falling back:', err);
+            }
+        }
+
+        // 3. Fallback knowledge answer
+        return this.getFallbackKnowledgeAnswer(customer, text);
+    }
+
+    /**
+     * Fallback structured technical knowledge answers for verified customers.
+     */
+    private static getFallbackKnowledgeAnswer(customer: Customer, text: string): string {
+        const clean = text.toLowerCase();
+        const customerName = customer.name || 'Valued Customer';
+
+        if (clean.includes('stabilizer') || clean.includes('servo') || clean.includes('voltage')) {
+            return (
+                `⚡ *Voltrix Servo Voltage Stabilizers*\n\n` +
+                `Hello *${customerName}*,\n` +
+                `Voltrix manufactures high-precision digital Servo Stabilizers with ±1% voltage accuracy and >98% efficiency:\n\n` +
+                `• *Air-Cooled:* 1 kVA to 100 kVA (Single & 3-Phase) for commercial & light industrial equipment.\n` +
+                `• *Oil-Cooled:* 15 kVA to 2500 kVA (3-Phase) for heavy factories, CNC machines, and hospitals.\n` +
+                `• *Protection:* High/low voltage cut-off, overload, single-phasing, and surge suppression.\n\n` +
+                `To calculate capacity sizing for your machines or request a quotation, call our engineering desk at *+91 90323 72136*.`
+            );
+        }
+
+        if (clean.includes('ups') || clean.includes('power backup') || clean.includes('online ups')) {
+            return (
+                `🔋 *Voltrix Online UPS Systems*\n\n` +
+                `Hello *${customerName}*,\n` +
+                `Our Online UPS solutions feature True Double Conversion with zero transfer time:\n\n` +
+                `• *Capacity:* 1 kVA to 500 kVA (1-Phase & 3-Phase)\n` +
+                `• *Technology:* High-frequency IGBT PWM Inverter with advanced DSP micro-controller.\n` +
+                `• *Applications:* Data centers, IT infrastructure, diagnostic imaging, and process automation.\n\n` +
+                `For backup duration and battery sizing, contact our team at *+91 90323 72136*.`
+            );
+        }
+
+        if (clean.includes('solar') || clean.includes('panel') || clean.includes('inverter')) {
+            return (
+                `☀️ *Voltrix Solar Power Solutions*\n\n` +
+                `Hello *${customerName}*,\n` +
+                `Voltrix designs and commissions complete solar energy systems:\n\n` +
+                `• *On-Grid Systems:* Reduce electricity bills with net-metering.\n` +
+                `• *Off-Grid & Hybrid:* Uninterrupted solar power with intelligent battery storage.\n` +
+                `• *Solar Inverters:* High efficiency MPPT solar power conditioning units.\n\n` +
+                `To schedule a solar site feasibility audit, contact *+91 90323 72136*.`
+            );
+        }
+
+        if (clean.includes('warranty') || clean.includes('guarantee') || clean.includes('service') || clean.includes('repair') || clean.includes('amc')) {
+            return (
+                `🛡️ *Warranty & Service Support*\n\n` +
+                `Hello *${customerName}*,\n` +
+                `All Voltrix power products come with standard manufacturer warranty (1 to 3 years depending on unit model) and on-site support.\n\n` +
+                `• *Helpline:* +91 90323 72136 | +91 73867 10160\n` +
+                `• *Email:* voltrixpowersystems@gmail.com\n` +
+                `• *AMC Plans:* Comprehensive Annual Maintenance Contracts are available for continuous uptime.\n\n` +
+                `Reply *"Contact support"* to connect with an engineer.`
+            );
+        }
+
+        if (clean.includes('price') || clean.includes('cost') || clean.includes('rate') || clean.includes('quote') || clean.includes('quotation')) {
+            return (
+                `💰 *Pricing & Quotations*\n\n` +
+                `Hello *${customerName}*,\n` +
+                `Voltrix provides custom factory-direct pricing based on exact equipment specifications, input voltage range, and cooling requirements.\n\n` +
+                `To receive a detailed commercial quotation with technical datasheet:\n` +
+                `• Visit: https://voltrixpower.com/#contact\n` +
+                `• Call: *+91 90323 72136*\n` +
+                `• Email: *voltrixpowersystems@gmail.com*`
+            );
+        }
+
+        // Generic informative response
+        return (
+            `⚡ *Voltrix Power Systems Assistant*\n\n` +
+            `Hello *${customerName}*,\n` +
+            `Thank you for reaching out to Voltrix Power Systems. We manufacture Servo Stabilizers (1–2500 kVA), Online UPS (1–500 kVA), Isolation Transformers, and Solar Solutions.\n\n` +
+            `*Quick Actions:*\n` +
+            `• *"Show my orders"* — View recent orders\n` +
+            `• *"Where is my latest order?"* — Check tracking\n` +
+            `• *"Send my invoice"* — Get invoice copy\n` +
+            `• *"Show my inquiries"* — View requests\n` +
+            `• *"Contact support"* — Talk to our team\n\n` +
+            `Or simply ask any product or technical question!`
+        );
     }
 }

@@ -58,14 +58,27 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (action === 'approve') {
+        const fee = body.perCustomerAssignmentFee !== undefined 
+            ? parseFloat(body.perCustomerAssignmentFee) 
+            : db.dealers[idx].perCustomerAssignmentFee;
+        const pct = body.commissionPercentage !== undefined 
+            ? parseFloat(body.commissionPercentage) 
+            : db.dealers[idx].commissionPercentage;
+
+        if (fee === undefined || fee === null || isNaN(fee) || fee <= 0 ||
+            pct === undefined || pct === null || isNaN(pct) || pct <= 0) {
+            return NextResponse.json({
+                error: 'Dealer approval requires setting and saving both a fixed price per customer and a commission percentage greater than 0.'
+            }, { status: 400 });
+        }
+
         db.dealers[idx] = {
             ...db.dealers[idx],
             status: 'approved',
             approvedAt: new Date().toISOString().split('T')[0],
             isSeenByAdmin: true,
-            // Apply commission settings if provided
-            ...(body.commissionPercentage !== undefined && { commissionPercentage: parseFloat(body.commissionPercentage) || 0 }),
-            ...(body.perCustomerAssignmentFee !== undefined && { perCustomerAssignmentFee: parseFloat(body.perCustomerAssignmentFee) || 0 }),
+            commissionPercentage: pct,
+            perCustomerAssignmentFee: fee,
         };
         // Notify approved dealer via WhatsApp
         try {

@@ -18,13 +18,14 @@ import {
   ArrowRight, Eye, Ban, RotateCcw, Key, ClipboardList, Bell,
   Printer, LayoutDashboard, TrendingUp, DollarSign, Activity,
   Award, ArrowUpRight, Sparkles, Settings, Package, Handshake, BadgeIndianRupee, Download,
-  IndianRupee, CheckCircle2, Clock, MessageSquare
+  IndianRupee, CheckCircle2, Clock, MessageSquare, UserPlus, UserCheck, Building
 } from 'lucide-react';
 import CustomerDetailModal from '../portal/CustomerDetailModal';
 import CompanySettingsTab from '../portal/CompanySettingsTab';
 import ProductsTab from './ProductsTab';
 import DealerDetailModal from '../portal/DealerDetailModal';
 import DealerAiAssistant from '../portal/DealerAiAssistant';
+import ApproveDealerCommissionModal from './ApproveDealerCommissionModal';
 import { matchesCustomerSearch, formatPurchaseDate } from '@/utils/customerSearch';
 
 interface Props {
@@ -515,6 +516,8 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
   const [page, setPage] = useState(1);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignDealer, setAssignDealer] = useState('');
+  const [addingCustomerId, setAddingCustomerId] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{ id: string; msg: string; type: 'success' | 'error' } | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('voltrix_auth_token') : '';
   const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -551,26 +554,63 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
     } catch { }
   };
 
+  const handleAddCustomer = async (inq: any) => {
+    setAddingCustomerId(inq.id);
+    setActionFeedback(null);
+    try {
+      const res = await fetch(`/api/inquiries/${inq.id}/add-customer`, {
+        method: 'POST',
+        headers,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionFeedback({
+          id: inq.id,
+          msg: `Customer "${data.customer?.name || inq.name}" added successfully!`,
+          type: 'success'
+        });
+        await load();
+        onInquiriesChange?.();
+      } else {
+        setActionFeedback({
+          id: inq.id,
+          msg: data.error || 'Failed to add customer.',
+          type: 'error'
+        });
+      }
+    } catch (e: any) {
+      setActionFeedback({
+        id: inq.id,
+        msg: e.message || 'Network communication error.',
+        type: 'error'
+      });
+    } finally {
+      setAddingCustomerId(null);
+    }
+  };
+
   const filtered = inquiries.filter(i =>
     i.name?.toLowerCase().includes(search.toLowerCase()) ||
     i.phone?.includes(search) ||
-    i.subject?.toLowerCase().includes(search.toLowerCase())
+    i.subject?.toLowerCase().includes(search.toLowerCase()) ||
+    i.productInterest?.toLowerCase().includes(search.toLowerCase()) ||
+    i.city?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div>
       <SectionHeader
-        title="Inquiries"
+        title="Inquiries & Quote Requests"
         count={inquiries.filter(i => i.status === 'new').length > 0 ? inquiries.filter(i => i.status === 'new').length : inquiries.length}
         action={
-          <button onClick={load} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors">
+          <button onClick={load} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
             <RefreshCw className="h-3 w-3" />Refresh
           </button>
         }
       />
       <div className="relative mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm focus:outline-none focus:border-emerald-500 font-medium" placeholder="Search inquiries..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+        <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm focus:outline-none focus:border-emerald-500 font-medium" placeholder="Search inquiries by name, phone, product, city..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
       </div>
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse" />)}</div>
@@ -584,25 +624,39 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
         <>
           <div className="space-y-3">
             {filtered.slice((page - 1) * 10, page * 10).map(inq => (
-              <div key={inq.id} className={`bg-white border-2 rounded-2xl p-5 hover:shadow-sm transition-all ${inq.status === 'new' ? 'border-blue-200 bg-blue-50/30' : 'border-slate-100'}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-grow">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
+              <div key={inq.id} className={`bg-white border-2 rounded-2xl p-5 hover:shadow-sm transition-all ${inq.status === 'new' ? 'border-blue-200 bg-blue-50/20' : 'border-slate-100'}`}>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                  <div className="min-w-0 flex-grow space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-black text-[#0A2342] text-sm">{inq.name}</p>
                       <Badge status={inq.status} />
                       {inq.status === 'new' && !inq.isSeenByAdmin && (
                         <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" title="New, unseen" />
                       )}
+                      {inq.linkedCustomerId && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                          <UserCheck className="h-3 w-3" />Customer Added
+                        </span>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-3 text-xs text-slate-500 font-medium mb-2">
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{inq.phone}</span>
-                      {inq.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inq.email}</span>}
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(inq.createdAt).toLocaleDateString('en-IN')}</span>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-slate-500 font-medium">
+                      <span className="flex items-center gap-1"><Phone className="h-3 w-3 text-slate-400" />{inq.phone}</span>
+                      {inq.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3 text-slate-400" />{inq.email}</span>}
+                      {(inq.city || inq.location) && (
+                        <span className="flex items-center gap-1 text-slate-600">
+                          <MapPin className="h-3 w-3 text-slate-400" />
+                          {inq.city ? `${inq.city}${inq.state ? `, ${inq.state}` : ''}` : inq.location}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3 text-slate-400" />{new Date(inq.createdAt).toLocaleDateString('en-IN')}</span>
                     </div>
+
                     <p className="text-xs text-slate-700 font-semibold">{inq.subject}</p>
-                    {inq.message && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{inq.message}</p>}
+                    {inq.message && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{inq.message}</p>}
+
                     {inq.productInterest && (
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap pt-0.5">
                         <p className="text-xs text-emerald-600 font-bold">Interested in: {inq.productInterest}</p>
                         {inq.productCategory && (
                           <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold">
@@ -611,13 +665,43 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
                         )}
                       </div>
                     )}
+
                     {inq.assignedDealerName && (
                       <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1">
                         <Check className="h-3 w-3" />Assigned to: {inq.assignedDealerName}
                       </p>
                     )}
+
+                    {/* Action Feedback Banner */}
+                    {actionFeedback && actionFeedback.id === inq.id && (
+                      <div className={`mt-2 p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 ${actionFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                        {actionFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />}
+                        <span>{actionFeedback.msg}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="shrink-0">
+
+                  {/* Actions Column */}
+                  <div className="shrink-0 flex items-center gap-2 flex-wrap w-full lg:w-auto justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                    {/* Add as Customer Action */}
+                    {!inq.linkedCustomerId ? (
+                      <button
+                        onClick={() => handleAddCustomer(inq)}
+                        disabled={addingCustomerId === inq.id}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95"
+                        title="Add this prospect as a new customer in the customer management system"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span>{addingCustomerId === inq.id ? 'Adding...' : 'Add as Customer'}</span>
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        <UserCheck className="h-3.5 w-3.5" />
+                        <span>Customer Added</span>
+                      </span>
+                    )}
+
+                    {/* Assign Dealer Action */}
                     {assigning === inq.id ? (
                       <div className="flex flex-col gap-2">
                         <select value={assignDealer} onChange={e => setAssignDealer(e.target.value)} className="text-xs border-2 border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500">
@@ -625,14 +709,14 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
                           {approvedDealers.map(d => <option key={d.id} value={d.id}>{d.companyName}</option>)}
                         </select>
                         <div className="flex gap-1">
-                          <button onClick={() => handleAssign(inq.id)} className="flex-1 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold">Assign</button>
-                          <button onClick={() => setAssigning(null)} className="px-2 py-1 bg-slate-100 rounded-lg text-xs"><X className="h-3 w-3" /></button>
+                          <button onClick={() => handleAssign(inq.id)} className="flex-1 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold cursor-pointer">Assign</button>
+                          <button onClick={() => setAssigning(null)} className="px-2 py-1 bg-slate-100 rounded-lg text-xs cursor-pointer"><X className="h-3 w-3" /></button>
                         </div>
                       </div>
                     ) : (
                       <button
                         onClick={() => { setAssigning(inq.id); setAssignDealer(inq.assignedDealerId || ''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 border-slate-200 text-xs font-bold text-slate-600 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 hover:border-emerald-300 hover:text-emerald-700 transition-colors cursor-pointer"
                       >
                         <ArrowRight className="h-3 w-3" />
                         {inq.assignedDealerId ? 'Reassign' : 'Assign Dealer'}
@@ -715,6 +799,53 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
     }
   };
 
+  const [dealerToApproveWithRates, setDealerToApproveWithRates] = useState<any | null>(null);
+
+  const handleInitiateApprove = (d: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const ci = commissionInputs[d.id];
+    const feeNumber = ci?.fee !== undefined && ci.fee !== '' ? parseFloat(ci.fee) : (d.perCustomerAssignmentFee ?? 0);
+    const pctNumber = ci?.pct !== undefined && ci.pct !== '' ? parseFloat(ci.pct) : (d.commissionPercentage ?? 0);
+
+    const hasSavedRates =
+      d.perCustomerAssignmentFee !== undefined &&
+      d.perCustomerAssignmentFee !== null &&
+      Number(d.perCustomerAssignmentFee) > 0 &&
+      d.commissionPercentage !== undefined &&
+      d.commissionPercentage !== null &&
+      Number(d.commissionPercentage) > 0;
+
+    // If neither saved in database nor typed in, or if either is missing/zero, show the modal to save it first!
+    if (!hasSavedRates || feeNumber <= 0 || pctNumber <= 0) {
+      setDealerToApproveWithRates(d);
+      return;
+    }
+
+    // Both are valid and ready to approve
+    doAction(d.id, 'approve');
+  };
+
+  const handleSaveRatesAndApprove = async (dealerId: string, feeVal: number, pctVal: number) => {
+    const res = await fetch(`/api/dealers/${dealerId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        action: 'approve',
+        perCustomerAssignmentFee: feeVal,
+        commissionPercentage: pctVal,
+      }),
+    });
+    if (!res.ok) {
+      const d = await res.json();
+      throw new Error(d.error || 'Failed to approve dealer.');
+    }
+    setCommissionInputs(prev => ({
+      ...prev,
+      [dealerId]: { fee: String(feeVal), pct: String(pctVal) }
+    }));
+    onDealersChange();
+  };
+
   const doAction = async (dealerId: string, action: string) => {
     setActioning(dealerId);
     try {
@@ -722,8 +853,17 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
       if (action === 'approve') {
         const dRecord = dealers.find(d => d.id === dealerId);
         const ci = commissionInputs[dealerId];
-        body.commissionPercentage = ci?.pct !== undefined && ci.pct !== '' ? parseFloat(ci.pct) : (dRecord?.commissionPercentage ?? 0);
-        body.perCustomerAssignmentFee = ci?.fee !== undefined && ci.fee !== '' ? parseFloat(ci.fee) : (dRecord?.perCustomerAssignmentFee ?? 0);
+        const pctVal = ci?.pct !== undefined && ci.pct !== '' ? parseFloat(ci.pct) : (dRecord?.commissionPercentage ?? 0);
+        const feeVal = ci?.fee !== undefined && ci.fee !== '' ? parseFloat(ci.fee) : (dRecord?.perCustomerAssignmentFee ?? 0);
+        
+        if (pctVal <= 0 || feeVal <= 0) {
+          if (dRecord) {
+            setDealerToApproveWithRates(dRecord);
+            return;
+          }
+        }
+        body.commissionPercentage = pctVal;
+        body.perCustomerAssignmentFee = feeVal;
       }
       const res = await fetch(`/api/dealers/${dealerId}`, {
         method: 'PATCH', headers,
@@ -817,7 +957,7 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
                   <div className="flex flex-col gap-2 shrink-0" onClick={e => e.stopPropagation()}>
                     {d.status === 'pending' && (
                       <div className="space-y-1.5">
-                        <button disabled={actioning === d.id} onClick={() => doAction(d.id, 'approve')} className="w-full flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
+                        <button disabled={actioning === d.id} onClick={(e) => handleInitiateApprove(d, e)} className="w-full flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors shadow-sm cursor-pointer">
                           <Check className="h-3.5 w-3.5" />Approve Dealer
                         </button>
                         <button disabled={actioning === d.id} onClick={() => handleDelete(d.id)} className="w-full flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 border-2 border-red-100 disabled:opacity-50 transition-colors cursor-pointer">
@@ -953,6 +1093,17 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
               setSelectedDealer(null);
             }
           }}
+        />
+      )}
+
+      {dealerToApproveWithRates && (
+        <ApproveDealerCommissionModal
+          isOpen={!!dealerToApproveWithRates}
+          dealer={dealerToApproveWithRates}
+          initialFee={commissionInputs[dealerToApproveWithRates.id]?.fee}
+          initialPct={commissionInputs[dealerToApproveWithRates.id]?.pct}
+          onClose={() => setDealerToApproveWithRates(null)}
+          onSaveAndApprove={handleSaveRatesAndApprove}
         />
       )}
     </div>

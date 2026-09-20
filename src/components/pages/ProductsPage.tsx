@@ -152,14 +152,8 @@ export default function ProductsPage({
   const [dealers, setDealers] = useState<any[]>([]);
   const [selectedDealerId, setSelectedDealerId] = useState<string>('');
 
-  // Modal & Auth State
+  // Modal State
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
-  const [authStep, setAuthStep] = useState<'none' | 'login' | 'register'>('none');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/dealers')
@@ -313,14 +307,34 @@ export default function ProductsPage({
       }
       const data = await resp.json();
       setSubmitSuccess(data);
-      setAuthStep('none');
-      setAuthPassword('');
-      setAuthConfirmPassword('');
     } catch (err: any) {
       setSubmitError(err.message || "An unexpected network issue occurred.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOpenQuoteForProduct = (prod: SubCategoryProduct & { parent: Category }) => {
+    setSelectedProduct(prod);
+    setParentCategory(prod.parent);
+    const isServoProd = !!masterConfig[prod.id];
+    const initialVariant = isServoProd ? masterConfig[prod.id].defaultVariant : null;
+    setActiveServoVariant(initialVariant);
+    const servoVariantData = isServoProd && initialVariant !== null ? getProductVariant(prod.id, initialVariant) : null;
+    const initialCapacityRating = servoVariantData?.specs.find(s => s.label === 'Power')?.value ||
+      prod.specs["Capacity"] || prod.specs["Rating"] || prod.specs["Power"] || prod.specs["Size Range"] || 'Standard Size';
+
+    setOrderForm(prev => ({
+      ...prev,
+      fullName: dealerSession?.name || customerSession?.name || adminSession?.name || prev.fullName || '',
+      companyName: dealerSession?.companyName || customerSession?.companyName || adminSession?.companyName || prev.companyName || '',
+      phone: dealerSession?.phone || customerSession?.phone || adminSession?.phone || prev.phone || '',
+      email: dealerSession?.email || customerSession?.email || adminSession?.email || prev.email || '',
+      capacityRating: initialCapacityRating
+    }));
+    setSubmitSuccess(null);
+    setSubmitError(null);
+    setIsQuoteModalOpen(true);
   };
 
   const handleFormContinue = (e: React.FormEvent) => {
@@ -335,95 +349,9 @@ export default function ProductsPage({
       return;
     }
     setSubmitError(null);
-
-    if (isLoggedIn) {
-      executeInquirySubmission();
-    } else {
-      setAuthStep('login');
-    }
+    executeInquirySubmission();
   };
 
-  const handleAuthAndSubmit = async (mode: 'login' | 'register') => {
-    setAuthError(null);
-    if (!authPassword) {
-      setAuthError("Please enter your password.");
-      return;
-    }
-    if (mode === 'register' && authPassword !== authConfirmPassword) {
-      setAuthError("Passwords do not match.");
-      return;
-    }
-
-    setAuthLoading(true);
-    try {
-      if (mode === 'register') {
-        const addressParts = [
-          orderForm.addressLine1,
-          orderForm.addressLine2,
-          orderForm.city,
-          orderForm.state,
-          orderForm.country
-        ].filter(Boolean);
-        const addressStr = addressParts.join(', ') + (orderForm.zipcode ? ` - ${orderForm.zipcode}` : '');
-
-        const signupRes = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            role: 'customer',
-            name: orderForm.fullName,
-            email: orderForm.email,
-            phone: orderForm.phone,
-            password: authPassword,
-            confirmPassword: authConfirmPassword,
-            businessName: orderForm.companyName || undefined,
-            address: addressStr
-          })
-        });
-        const signupData = await signupRes.json();
-        if (!signupRes.ok || !signupData.success) {
-          throw new Error(signupData.error || "Failed to create account.");
-        }
-        if (signupData.token) {
-          localStorage.setItem('token', signupData.token);
-          localStorage.setItem('role', 'customer');
-        }
-        const newUser = signupData.user;
-        setCurrentUser(newUser);
-        if (onCustomerLogin) {
-          onCustomerLogin(newUser);
-        }
-        await executeInquirySubmission(signupData.token, newUser);
-      } else {
-        const loginRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: orderForm.email || orderForm.phone,
-            password: authPassword
-          })
-        });
-        const loginData = await loginRes.json();
-        if (!loginRes.ok || !loginData.success) {
-          throw new Error(loginData.error || "Invalid credentials. If you don't have an account, please switch to 'Create Account'.");
-        }
-        if (loginData.token) {
-          localStorage.setItem('token', loginData.token);
-          localStorage.setItem('role', loginData.user?.role || 'customer');
-        }
-        const loggedUser = loginData.user;
-        setCurrentUser(loggedUser);
-        if (loggedUser.role === 'customer' && onCustomerLogin) {
-          onCustomerLogin(loggedUser);
-        }
-        await executeInquirySubmission(loginData.token, loggedUser);
-      }
-    } catch (err: any) {
-      setAuthError(err.message || "Authentication failed. Please try again.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
 
   const handleCloseDetails = () => {
     onNavigate('#products');
@@ -654,13 +582,23 @@ export default function ProductsPage({
                                 ))}
                               </div>
 
-                              <div className="pt-4 border-t border-slate-100">
+                              <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
                                 <button
-                                  onClick={() => onNavigate(`#products/${prod.id}`)}
-                                  className="h-10 px-4 w-full bg-slate-900 hover:bg-[#0A2342] text-white hover:bg-brand-green font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] font-sans"
+                                  type="button"
+                                  onClick={() => handleOpenQuoteForProduct(prod)}
+                                  className="h-10 flex-1 bg-brand-green hover:bg-[#16a34a] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-xs active:scale-[0.99] font-sans"
                                 >
-                                  <span>View Specs & Request</span>
-                                  <ChevronRight className="h-4 w-4" />
+                                  <Send className="h-3.5 w-3.5" />
+                                  <span>Get Quote</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onNavigate(`#products/${prod.id}`)}
+                                  className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-1 active:scale-[0.99] font-sans"
+                                  title="View Specifications"
+                                >
+                                  <span>Specs</span>
+                                  <ChevronRight className="h-3.5 w-3.5" />
                                 </button>
                               </div>
                             </div>
@@ -856,8 +794,6 @@ export default function ProductsPage({
                     onClick={() => {
                       setSubmitSuccess(null);
                       setSubmitError(null);
-                      setAuthError(null);
-                      setAuthStep('none');
                       setIsQuoteModalOpen(true);
                     }}
                     className="w-full sm:w-auto px-6 py-3.5 bg-brand-green hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-brand-green/20 shrink-0 font-sans"
@@ -897,7 +833,6 @@ export default function ProductsPage({
                         onClick={() => {
                           setIsQuoteModalOpen(false);
                           setSubmitSuccess(null);
-                          setAuthStep('none');
                         }}
                         className="p-1.5 rounded-xl hover:bg-slate-200/60 text-slate-400 hover:text-slate-700 transition cursor-pointer border-none bg-transparent"
                       >
@@ -908,7 +843,7 @@ export default function ProductsPage({
                     {/* Modal Body */}
                     <div className="p-6">
                       {submitSuccess ? (
-                        /* Step 3: Success Confirmation Screen */
+                        /* Step 2: Success Confirmation Screen */
                         <div className="space-y-5 text-center py-2">
                           <div className="w-14 h-14 bg-emerald-50 border border-emerald-200 text-brand-green rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                             <CheckCircle2 className="h-8 w-8" />
@@ -946,211 +881,14 @@ export default function ProductsPage({
                             onClick={() => {
                               setIsQuoteModalOpen(false);
                               setSubmitSuccess(null);
-                              setAuthStep('none');
                             }}
                             className="w-full h-11 bg-slate-900 hover:bg-[#0A2342] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer font-sans"
                           >
                             Done & Return
                           </button>
                         </div>
-                      ) : authStep !== 'none' ? (
-                        /* Step 2: Authentication Required (Sign In or Register) */
-                        <div className="space-y-5">
-                          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-800">
-                            <Lock className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                            <div className="text-xs">
-                              <strong className="block font-bold">Account Verification Required</strong>
-                              <span className="text-[11px] text-amber-700">
-                                Please sign in or create an account to finalize your quote. This connects you with your assigned regional dealer and records your quote in your portal.
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Mode Tabs */}
-                          <div className="flex rounded-xl bg-slate-100 p-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAuthStep('login');
-                                setAuthError(null);
-                              }}
-                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition border-none cursor-pointer font-sans ${
-                                authStep === 'login'
-                                  ? 'bg-white text-slate-900 shadow-xs'
-                                  : 'bg-transparent text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              Sign In
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAuthStep('register');
-                                setAuthError(null);
-                              }}
-                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition border-none cursor-pointer font-sans ${
-                                authStep === 'register'
-                                  ? 'bg-white text-slate-900 shadow-xs'
-                                  : 'bg-transparent text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              Create Account
-                            </button>
-                          </div>
-
-                          {/* Login Tab Content */}
-                          {authStep === 'login' ? (
-                            <div className="space-y-4">
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">
-                                  Email / Phone
-                                </label>
-                                <div className="relative">
-                                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                  <input
-                                    type="text"
-                                    value={orderForm.email || orderForm.phone}
-                                    onChange={(e) => setOrderForm(prev => ({ ...prev, email: e.target.value }))}
-                                    placeholder="Enter your email or phone"
-                                    className="w-full h-10 pl-9 pr-3.5 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800 font-sans"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">
-                                  Password
-                                </label>
-                                <div className="relative">
-                                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                  <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={authPassword}
-                                    onChange={(e) => setAuthPassword(e.target.value)}
-                                    placeholder="Enter your password"
-                                    className="w-full h-10 pl-9 pr-10 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800 font-sans"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer"
-                                  >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                  </button>
-                                </div>
-                              </div>
-
-                              {authError && (
-                                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2 font-sans">
-                                  <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-                                  <span>{authError}</span>
-                                </div>
-                              )}
-
-                              <div className="pt-2 flex gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() => setAuthStep('none')}
-                                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer font-sans"
-                                >
-                                  Edit Form
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={authLoading}
-                                  onClick={() => handleAuthAndSubmit('login')}
-                                  className="flex-1 h-11 bg-brand-green hover:bg-[#16a34a] disabled:bg-slate-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-2 font-sans shadow-sm"
-                                >
-                                  {authLoading ? <span>Verifying & Submitting...</span> : <span>Sign In & Submit Quote</span>}
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Register Tab Content */
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">Full Name</label>
-                                  <input
-                                    type="text"
-                                    value={orderForm.fullName}
-                                    onChange={(e) => setOrderForm(prev => ({ ...prev, fullName: e.target.value }))}
-                                    className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">Phone</label>
-                                  <input
-                                    type="tel"
-                                    value={orderForm.phone}
-                                    onChange={(e) => setOrderForm(prev => ({ ...prev, phone: e.target.value }))}
-                                    className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">Email</label>
-                                <input
-                                  type="email"
-                                  value={orderForm.email}
-                                  onChange={(e) => setOrderForm(prev => ({ ...prev, email: e.target.value }))}
-                                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800"
-                                />
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">Password</label>
-                                  <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={authPassword}
-                                    onChange={(e) => setAuthPassword(e.target.value)}
-                                    placeholder="Create password"
-                                    className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase block font-sans">Confirm Password</label>
-                                  <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={authConfirmPassword}
-                                    onChange={(e) => setAuthConfirmPassword(e.target.value)}
-                                    placeholder="Re-enter password"
-                                    className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-green text-slate-800"
-                                  />
-                                </div>
-                              </div>
-
-                              {authError && (
-                                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2 font-sans">
-                                  <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-                                  <span>{authError}</span>
-                                </div>
-                              )}
-
-                              <div className="pt-2 flex gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() => setAuthStep('none')}
-                                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer font-sans"
-                                >
-                                  Edit Form
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={authLoading}
-                                  onClick={() => handleAuthAndSubmit('register')}
-                                  className="flex-1 h-11 bg-brand-green hover:bg-[#16a34a] disabled:bg-slate-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition border-none cursor-pointer flex items-center justify-center gap-2 font-sans shadow-sm"
-                                >
-                                  {authLoading ? <span>Registering & Submitting...</span> : <span>Create Account & Submit Quote</span>}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
                       ) : (
-                        /* Step 1: The Quote Form */
+                        /* The Quote Form - No Login Required */
                         <form onSubmit={handleFormContinue} className="space-y-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-1">
@@ -1302,7 +1040,7 @@ export default function ProductsPage({
                             ) : (
                               <>
                                 <Send className="h-4 w-4" />
-                                <span>{isLoggedIn ? 'Submit Quote Request' : 'Continue to Submit Quote'}</span>
+                                <span>Submit Quote Request</span>
                               </>
                             )}
                           </button>

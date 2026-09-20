@@ -120,51 +120,17 @@ export async function POST(req: NextRequest) {
         isSeenByAdmin: false,
     };
 
-    // 1. Ensure customer is recorded/updated in db.customers (Admin Customers list)
-    if (!db.customers) db.customers = [];
-    let customerObj = db.customers.find((c: any) =>
-        (email && c.email && c.email.toLowerCase() === email.toLowerCase().trim()) ||
-        (phone && c.phone && c.phone.trim() === phone.trim()) ||
-        (linkedCustomerId && (c.id === linkedCustomerId || c._id === linkedCustomerId))
-    );
-
-    if (!customerObj) {
-        const newCustId = linkedCustomerId || `cust_${Date.now()}`;
-        customerObj = {
-            id: newCustId,
-            name: name.trim(),
-            email: (email || '').trim().toLowerCase(),
-            phone: phone.trim(),
-            companyName: body.companyName || '',
-            address: location || addressLine1 || '',
-            city: city || '',
-            state: state || '',
-            country: country || 'India',
-            zipcode: zipcode || '',
-            source: 'inquiry',
-            status: 'new',
-            hasLogin: !!userAuth,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            notes: message || `Inquired for ${productInterest || productCategory || 'products'}`
-        };
-        db.customers.unshift(customerObj);
-        inquiry.linkedCustomerId = newCustId;
-        await persistWrite('customers', newCustId, customerObj);
-    } else {
-        let changed = false;
-        if (!customerObj.name && name) { customerObj.name = name.trim(); changed = true; }
-        if (!customerObj.phone && phone) { customerObj.phone = phone.trim(); changed = true; }
-        if (!customerObj.email && email) { customerObj.email = email.trim().toLowerCase(); changed = true; }
-        if (body.companyName && !customerObj.companyName) { customerObj.companyName = body.companyName; changed = true; }
-        if (city && !customerObj.city) { customerObj.city = city; changed = true; }
-        if (state && !customerObj.state) { customerObj.state = state; changed = true; }
-        if (addressLine1 && !customerObj.address) { customerObj.address = addressLine1; changed = true; }
-        if (changed) {
-            customerObj.updatedAt = new Date().toISOString();
-            await persistWrite('customers', customerObj.id, customerObj);
+    // 1. If an existing customer matches this phone or email, link to their profile
+    if (db.customers && Array.isArray(db.customers)) {
+        const cleanPhone = phone ? phone.trim() : '';
+        const cleanEmail = email ? email.trim().toLowerCase() : '';
+        const existingCust = db.customers.find((c: any) =>
+            (cleanPhone && c.phone && c.phone.trim() === cleanPhone) ||
+            (cleanEmail && c.email && c.email.toLowerCase().trim() === cleanEmail)
+        );
+        if (existingCust) {
+            inquiry.linkedCustomerId = existingCust.id;
         }
-        inquiry.linkedCustomerId = customerObj.id;
     }
 
     // 2. Assign Dealer (explicitly passed or matching region/first approved)

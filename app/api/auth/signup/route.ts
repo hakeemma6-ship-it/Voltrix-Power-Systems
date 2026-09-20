@@ -55,69 +55,7 @@ export async function POST(req: NextRequest) {
     const userId = `u_${Date.now()}`;
 
     if (role === 'customer') {
-        const customerName = name || username || 'Customer Client';
-        if (!db.customers) db.customers = [];
-        const existingCust = db.customers.find((c: any) =>
-            (formattedEmail && c.email && c.email.toLowerCase().trim() === formattedEmail) ||
-            (phone && c.phone && c.phone.trim() === phone.trim())
-        );
-
-        let finalCustomerId = userId;
-        let finalCustomerObj: any = null;
-
-        if (existingCust) {
-            const custIdx = db.customers.findIndex((c: any) => c.id === existingCust.id);
-            if (custIdx !== -1) {
-                (db.customers as any[])[custIdx] = {
-                    ...db.customers[custIdx],
-                    hasLogin: true,
-                    password: hashedPassword,
-                    name: db.customers[custIdx].name || customerName,
-                    phone: db.customers[custIdx].phone || phone || '',
-                    email: db.customers[custIdx].email || formattedEmail,
-                    updatedAt: new Date().toISOString()
-                };
-                finalCustomerId = db.customers[custIdx].id;
-                finalCustomerObj = db.customers[custIdx];
-                await persistWrite('customers', finalCustomerId, db.customers[custIdx]);
-            }
-        } else {
-            const customerId = `cust_${Date.now()}`;
-            const newCustomer: any = {
-                id: customerId,
-                name: customerName,
-                phone: phone || '',
-                email: formattedEmail,
-                password: hashedPassword,
-                source: 'inquiry',
-                status: 'new',
-                hasLogin: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            db.customers.unshift(newCustomer);
-            finalCustomerId = customerId;
-            finalCustomerObj = newCustomer;
-            await persistWrite('customers', newCustomer.id, newCustomer);
-        }
-
-        // Send welcome WhatsApp notification to the customer
-        try {
-            await sendWhatsAppMessage({
-                to: phone || '',
-                recipientName: customerName,
-                type: 'template',
-                templateName: 'customer_signup_welcome',
-                parameters: [customerName, 'https://voltrixpowersystems.com/#login']
-            });
-        } catch (err) {
-            console.error('Failed to send customer welcome whatsapp notification:', err);
-        }
-
-        const token = signToken({ id: finalCustomerId, email: formattedEmail, role: 'customer' }, '24h');
-        const res = NextResponse.json({ success: true, message: 'Customer registered successfully.', token, user: sanitizeUser({ ...finalCustomerObj, role: 'customer' }) }, { status: 201 });
-        res.cookies.set('token', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 86400, path: '/' });
-        return res;
+        return NextResponse.json({ error: 'Customer registration is not supported. Only authorized dealers can apply.' }, { status: 403 });
     }
 
     if (role === 'dealer') {

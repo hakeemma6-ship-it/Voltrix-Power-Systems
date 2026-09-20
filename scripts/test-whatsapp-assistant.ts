@@ -122,11 +122,27 @@ async function runTests() {
         },
     ];
 
+    const testDealerId = 'dealer_hyd_01';
+    const testDealerPhone = '919000011111';
+    const testDealer = {
+        id: testDealerId,
+        companyName: 'Telangana Power Tech',
+        name: 'Suresh Reddy',
+        email: 'suresh@telanganapower.com',
+        phone: testDealerPhone,
+        city: 'Hyderabad',
+        state: 'Telangana',
+        status: 'approved' as const,
+        registeredAt: new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString(),
+    };
+
+    if (!db.dealers) db.dealers = [];
     if (!db.customers) db.customers = [];
     if (!db.deal_closures) db.deal_closures = [];
     if (!db.inquiries) db.inquiries = [];
 
     // Push test data
+    db.dealers.push(testDealer as any);
     db.customers.push(testCustomer as any);
     db.deal_closures.push(...(testDeals as any));
     db.inquiries.push(...(testInquiries as any));
@@ -165,8 +181,26 @@ async function runTests() {
     const isTamperedValid = WhatsAppService.verifyWebhookSignature(samplePayload, tamperedHmac);
     assert(isTamperedValid === false, 'HMAC signature verification rejects tampered / wrong secret');
 
-    // ─── Test 3: Customer Authentication Mapping & Unverified Caller Protection ─
-    console.log('\n--- 3. Customer Authentication & Data Protection ---');
+    // ─── Test 3: Dealer Identification & Unverified Caller Protection ─────────
+    console.log('\n--- 3. Role Checking (Dealer vs Customer vs Guest) ---');
+    // Check Dealer detection
+    const matchedDealer = await CustomerAssistantService.findDealerByPhone(testDealerPhone);
+    assert(matchedDealer !== null && matchedDealer.id === testDealerId, 'Identifies registered WhatsApp sender phone as authorized Dealer');
+
+    const dealerReply = await CustomerAssistantService.handleIncomingMessage({
+        from: testDealerPhone,
+        messageId: `msg_dealer_${Date.now()}`,
+        text: 'What is the price of 50 kva servo stabilizer?',
+    });
+    assert(
+        dealerReply.replyText?.includes('registered Voltrix Dealer Partner') === true &&
+        dealerReply.replyText?.includes('Dealers Portal') === true &&
+        dealerReply.replyText?.includes('#dealer-portal') === true &&
+        dealerReply.replyText?.includes('Dealer AI Assistant') === true,
+        'Dealer messaging on WhatsApp is instructed to use the Dealer AI in Dealers Portal'
+    );
+
+    // Check Customer detection
     const matchedCustomer = await CustomerAssistantService.findCustomerByVerifiedPhone(testCustomerPhone);
     assert(matchedCustomer !== null && matchedCustomer.id === testCustomerId, 'Maps verified WhatsApp sender phone to Voltrix customerId');
 
@@ -303,6 +337,30 @@ async function runTests() {
     assert(
         resInvoice.replyText?.includes('INV-2026-0089') === true,
         'Response: Sends invoice details and PDF document link'
+    );
+
+    // Query 7: Verified customer asking product information
+    const resProductInfo = await CustomerAssistantService.handleIncomingMessage({
+        from: testCustomerPhone,
+        messageId: `msg_test_${Date.now()}_7`,
+        text: 'Tell me about your Servo Voltage Stabilizers for industrial loads',
+    });
+    assert(
+        resProductInfo.replyText?.includes('Servo') === true &&
+        resProductInfo.replyText?.includes('Stabilizer') === true,
+        'Response: Verified customer receives comprehensive product details on Servo Voltage Stabilizers'
+    );
+
+    // Query 8: Verified customer asking warranty information
+    const resWarranty = await CustomerAssistantService.handleIncomingMessage({
+        from: testCustomerPhone,
+        messageId: `msg_test_${Date.now()}_8`,
+        text: 'What is the warranty policy and service support?',
+    });
+    assert(
+        resWarranty.replyText?.includes('Warranty') === true &&
+        resWarranty.replyText?.includes('Service') === true,
+        'Response: Verified customer receives warranty terms and on-site support contact'
     );
 
     // ─── Test 7: Prompt Injection & DB Security Guard ───────────────────────────

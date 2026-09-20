@@ -37,7 +37,6 @@ const LoginPage = dynamic(() => import('./components/portal/LoginPage'), { ssr: 
 const DealerRegistrationForm = dynamic(() => import('./components/portal/DealerRegistrationForm'), { ssr: false, loading: () => <PageLoadProgress /> });
 const CategoriesPage = dynamic(() => import('./components/pages/CategoriesPage'), { ssr: false, loading: () => <PageLoadProgress /> });
 const ProductsPage = dynamic(() => import('./components/pages/ProductsPage'), { ssr: false, loading: () => <PageLoadProgress /> });
-const CustomerProfile = dynamic(() => import('./components/portal/CustomerProfile'), { ssr: false, loading: () => <PageLoadProgress /> });
 const SetPasswordPage = dynamic(() => import('./components/portal/SetPasswordPage'), { ssr: false, loading: () => <PageLoadProgress /> });
 const ServoStabilizersShowcase = dynamic(() => import('./components/pages/ServoStabilizersShowcase'), { ssr: false, loading: () => <PageLoadProgress /> });
 
@@ -80,7 +79,6 @@ function AppContent() {
   // Sessions
   const [dealerSession, setDealerSession] = useState<any>(null);
   const [adminSession, setAdminSession] = useState<any>(null);
-  const [customerSession, setCustomerSession] = useState<any>(null);
   const [isSessionLoading, setIsSessionLoading] = useState<boolean>(true);
 
   // Hero image with fallback
@@ -128,7 +126,6 @@ function AppContent() {
             if (data.user) {
               if (data.user.role === 'admin') setAdminSession(data.user);
               else if (data.user.role === 'dealer') setDealerSession(data.user);
-              else if (data.user.role === 'customer') setCustomerSession(data.user);
             }
           }
         }
@@ -229,9 +226,8 @@ function AppContent() {
     const hash = currentHash;
     let title = "VOLTRIX | Power Solutions Platform & Technical Guidance Portal";
     let desc = "VOLTRIX is a Power Solutions Platform helping users evaluate, compare, and connect with suitable power protection solution providers.";
-    if (hash === '#login') { title = "Secure Login | VOLTRIX"; desc = "Secure gateway for authorized dealers, administrators, and customers."; }
+    if (hash === '#login') { title = "Secure Login | VOLTRIX"; desc = "Secure gateway for authorized dealers and administrators."; }
     else if (hash === '#dealer-register') { title = "Dealer Registration | VOLTRIX"; desc = "Register as an authorized Voltrix dealer and join our distribution network."; }
-    else if (hash === '#profile') { title = "My Orders & Inquiries | VOLTRIX"; desc = "Track your power system orders and inquiry status."; }
     else if (hash === '#dealer-portal') { title = "Dealer Portal | VOLTRIX Power Systems"; desc = "Manage clients, create quotations, and file orders as an authorized Voltrix dealer."; }
     else if (hash.startsWith('#admin')) { title = "Admin Dashboard | VOLTRIX"; desc = "Administrative panel for managing customers, dealers, orders, and quotations."; }
     else if (hash.startsWith('#categories')) { title = "Voltrix Industrial Power Categories"; desc = "Explore our premium power portfolio including UPS, stabilizers, solar, and battery systems."; }
@@ -248,13 +244,12 @@ function AppContent() {
   useEffect(() => {
     if (isSessionLoading) return;
     if (activeHash === '#login') {
-      if (customerSession) handleNavigate('#profile');
-      else if (dealerSession) handleNavigate('#dealer-portal');
+      if (dealerSession) handleNavigate('#dealer-portal');
       else if (adminSession) handleNavigate('#admin');
-    } else if (activeHash === '#profile') {
-      if (!customerSession && !adminSession && !dealerSession) handleNavigate('#login');
+    } else if (['#profile', '#orders', '#quotations', '#support', '#security'].includes(activeHash)) {
+      handleNavigate('#home');
     }
-  }, [activeHash, customerSession, dealerSession, adminSession, isSessionLoading]);
+  }, [activeHash, dealerSession, adminSession, isSessionLoading]);
 
   const handleNavigate = (hash: string) => {
     if (hash === '#login' && currentHash && currentHash !== '#login' && currentHash !== '#home') {
@@ -269,7 +264,6 @@ function AppContent() {
     localStorage.removeItem('voltrix_auth_token');
     setDealerSession(null);
     setAdminSession(null);
-    setCustomerSession(null);
     window.location.hash = '#home';
   };
 
@@ -302,7 +296,6 @@ function AppContent() {
           onNavigate={handleNavigate}
           dealerSession={dealerSession}
           adminSession={adminSession}
-          customerSession={customerSession}
           onLogout={handleLogout}
         />
       )}
@@ -313,7 +306,6 @@ function AppContent() {
         {/* Loading state for protected portal views */}
         {isSessionLoading && (
           activeHash === '#login' ||
-          activeHash === '#profile' ||
           activeHash === '#dealer-portal' ||
           activeHash.startsWith('#admin')
         ) && <PageLoadProgress />}
@@ -363,11 +355,9 @@ function AppContent() {
             <LoginPage
               onAdminLogin={(admin, isActive) => { setAdminSession(admin); if (isActive) handleNavigate('#admin'); }}
               onDealerLogin={(dealer, isActive) => { setDealerSession(dealer); if (isActive) handleNavigate('#dealer-portal'); }}
-              onCustomerLogin={(cust, isActive) => { setCustomerSession(cust); if (isActive) handleNavigate('#profile'); }}
               onNavigate={handleNavigate}
               dealerSession={dealerSession}
               adminSession={adminSession}
-              customerSession={customerSession}
             />
           </React.Suspense>
         )}
@@ -386,30 +376,7 @@ function AppContent() {
           </React.Suspense>
         )}
 
-        {/* CUSTOMER PROFILE & SUB-PAGES (#profile, #orders, #quotations, #support, #security) */}
-        {!isSessionLoading && ['#profile', '#orders', '#quotations', '#support', '#security'].includes(activeHash) && (
-          <React.Suspense fallback={<PageLoadProgress />}>
-            {customerSession ? (
-              <CustomerProfile
-                customerSession={customerSession}
-                onLogout={handleLogout}
-                onUpdateSession={(updatedUser) => setCustomerSession(updatedUser)}
-                activeHash={activeHash}
-                onNavigate={handleNavigate}
-              />
-            ) : (
-              <LoginPage
-                onAdminLogin={(admin, isActive) => { setAdminSession(admin); if (isActive) handleNavigate('#admin'); }}
-                onDealerLogin={(dealer, isActive) => { setDealerSession(dealer); if (isActive) handleNavigate('#dealer-portal'); }}
-                onCustomerLogin={(cust, isActive) => { setCustomerSession(cust); if (isActive) handleNavigate('#profile'); }}
-                onNavigate={handleNavigate}
-                dealerSession={dealerSession}
-                adminSession={adminSession}
-                customerSession={customerSession}
-              />
-            )}
-          </React.Suspense>
-        )}
+
 
         {/* DEALER PORTAL */}
         {!isSessionLoading && activeHash === '#dealer-portal' && (
@@ -421,11 +388,9 @@ function AppContent() {
                 <LoginPage
                   onAdminLogin={(admin, isActive) => { setAdminSession(admin); if (isActive) handleNavigate('#admin'); }}
                   onDealerLogin={(dealer, isActive) => { setDealerSession(dealer); if (isActive) handleNavigate('#dealer-portal'); }}
-                  onCustomerLogin={(cust, isActive) => { setCustomerSession(cust); if (isActive) handleNavigate('#profile'); }}
                   onNavigate={handleNavigate}
                   dealerSession={dealerSession}
                   adminSession={adminSession}
-                  customerSession={customerSession}
                 />
               </React.Suspense>
             )}
@@ -436,7 +401,7 @@ function AppContent() {
         {activeHash === '#ai-support' && (
           <DedicatedAiSupport
             key={`ai-support-${aiSupportNavKey}`}
-            activeSession={dealerSession || adminSession || customerSession}
+            activeSession={dealerSession || adminSession}
             onNavigate={handleNavigate}
           />
         )}
@@ -454,7 +419,6 @@ function AppContent() {
             <ServoStabilizersShowcase
               onNavigate={handleNavigate}
               dealerSession={dealerSession}
-              customerSession={customerSession}
               adminSession={adminSession}
               showBreadcrumb={true}
             />
@@ -468,9 +432,7 @@ function AppContent() {
               currentHash={currentHash}
               onNavigate={handleNavigate}
               dealerSession={dealerSession}
-              customerSession={customerSession}
               adminSession={adminSession}
-              onCustomerLogin={(cust) => setCustomerSession(cust)}
             />
           </React.Suspense>
         )}
@@ -605,11 +567,9 @@ function AppContent() {
                 <LoginPage
                   onAdminLogin={(admin, isActive) => { setAdminSession(admin); if (isActive) handleNavigate('#admin'); }}
                   onDealerLogin={(dealer, isActive) => { setDealerSession(dealer); if (isActive) handleNavigate('#dealer-portal'); }}
-                  onCustomerLogin={(cust, isActive) => { setCustomerSession(cust); if (isActive) handleNavigate('#profile'); }}
                   onNavigate={handleNavigate}
                   dealerSession={dealerSession}
                   adminSession={adminSession}
-                  customerSession={customerSession}
                 />
               </React.Suspense>
             )}

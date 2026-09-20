@@ -64,15 +64,6 @@ export async function GET(req: NextRequest) {
 
         let matchedUser = db.users.find((u: any) => u.email.toLowerCase() === email);
         if (!matchedUser) {
-            const custAcc = db.customers?.find((c: any) => c.email && c.email.toLowerCase() === email);
-            if (custAcc && custAcc.hasLogin) {
-                matchedUser = {
-                    ...custAcc,
-                    role: 'customer'
-                };
-            }
-        }
-        if (!matchedUser) {
             const dealerAcc = db.dealers?.find((d: any) => d.email && d.email.toLowerCase() === email);
             if (dealerAcc) {
                 matchedUser = {
@@ -82,23 +73,15 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        if (matchedUser && matchedUser.phone && matchedUser.phone.trim().length >= 10) {
-            // Already onboarded with mobile number! Create JWT token, set cookie, and redirect.
+        if (matchedUser && (matchedUser.role === 'admin' || matchedUser.role === 'dealer')) {
             const token = signToken({ id: matchedUser.id || matchedUser._id, email: matchedUser.email, role: matchedUser.role }, '24h');
-
-            const redirectTarget = matchedUser.role === 'admin'
-                ? '/#admin'
-                : matchedUser.role === 'dealer'
-                    ? '/#dealer-portal'
-                    : '/#profile';
-
+            const redirectTarget = matchedUser.role === 'admin' ? '/#admin' : '/#dealer-portal';
             const response = NextResponse.redirect(`${origin}${redirectTarget}?auth0_token=${token}`);
             response.cookies.set('token', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 86400, path: '/' });
             return response;
         }
 
-        // 4. Requires onboarding! Redirect back to login with onboarding mode
-        return NextResponse.redirect(`${origin}/#login?google_onboarding=1&email=${encodeURIComponent(email)}&name=${encodeURIComponent(nickname)}`);
+        return NextResponse.redirect(`${origin}/#login?error=No+authorized+dealer+or+admin+account+found+for+this+email`);
 
     } catch (e: any) {
         console.error('[Auth0 Callback Error]:', e);

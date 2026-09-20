@@ -7,6 +7,7 @@ import {
     FileText, Copy, Eye, EyeOff, ShieldCheck, Plus, Trash2, Award, Download, ExternalLink, IndianRupee
 } from 'lucide-react';
 import type { Dealer } from '@/types';
+import ApproveDealerCommissionModal from '../admin/ApproveDealerCommissionModal';
 
 interface Props {
     dealer: Dealer | any;
@@ -44,6 +45,7 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
     );
     const [savingRates, setSavingRates] = useState(false);
     const [ratesSavedFeedback, setRatesSavedFeedback] = useState(false);
+    const [showApproveRatesModal, setShowApproveRatesModal] = useState(false);
 
     useEffect(() => {
         setCommPctInput(dealer.commissionPercentage !== undefined && dealer.commissionPercentage !== null ? String(dealer.commissionPercentage) : '');
@@ -126,13 +128,65 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
         setTimeout(() => setCopiedField(null), 2000);
     };
 
+    const handleInitiateApprove = () => {
+        const feeNum = custFeeInput ? parseFloat(custFeeInput) : (dealer.perCustomerAssignmentFee ?? 0);
+        const pctNum = commPctInput ? parseFloat(commPctInput) : (dealer.commissionPercentage ?? 0);
+
+        const hasSavedRates =
+            dealer.perCustomerAssignmentFee !== undefined &&
+            dealer.perCustomerAssignmentFee !== null &&
+            Number(dealer.perCustomerAssignmentFee) > 0 &&
+            dealer.commissionPercentage !== undefined &&
+            dealer.commissionPercentage !== null &&
+            Number(dealer.commissionPercentage) > 0;
+
+        if (!hasSavedRates || feeNum <= 0 || pctNum <= 0) {
+            setShowApproveRatesModal(true);
+            return;
+        }
+
+        doAction('approve');
+    };
+
+    const handleSaveRatesAndApprove = async (dealerId: string, feeVal: number, pctVal: number) => {
+        const res = await fetch(`/api/dealers/${dealerId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({
+                action: 'approve',
+                perCustomerAssignmentFee: feeVal,
+                commissionPercentage: pctVal,
+            }),
+        });
+        if (!res.ok) {
+            const d = await res.json();
+            throw new Error(d.error || 'Failed to approve dealer.');
+        }
+        setCustFeeInput(String(feeVal));
+        setCommPctInput(String(pctVal));
+        onUpdate();
+    };
+
     const doAction = async (action: string) => {
+        if (action === 'approve') {
+            const feeNum = custFeeInput ? parseFloat(custFeeInput) : (dealer.perCustomerAssignmentFee ?? 0);
+            const pctNum = commPctInput ? parseFloat(commPctInput) : (dealer.commissionPercentage ?? 0);
+            if (feeNum <= 0 || pctNum <= 0) {
+                setShowApproveRatesModal(true);
+                return;
+            }
+        }
         setActioning(true);
         try {
+            const body: any = { action };
+            if (action === 'approve') {
+                body.perCustomerAssignmentFee = parseFloat(custFeeInput) || dealer.perCustomerAssignmentFee || 0;
+                body.commissionPercentage = parseFloat(commPctInput) || dealer.commissionPercentage || 0;
+            }
             const res = await fetch(`/api/dealers/${dealer.id}`, {
                 method: 'PATCH',
                 headers,
-                body: JSON.stringify({ action }),
+                body: JSON.stringify(body),
             });
             if (res.ok) {
                 onUpdate();
@@ -211,8 +265,9 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
     const inputCls = "w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-all text-slate-800";
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-auto border border-slate-100 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+        <>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-auto border border-slate-100 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
 
                 {/* Modal Header */}
                 <div className="bg-[#0A2342] text-white p-4 sm:p-6 shrink-0 flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-center sm:justify-between border-b border-white/10">
@@ -239,8 +294,8 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
                             <>
                                 <button
                                     disabled={actioning}
-                                    onClick={() => doAction('approve')}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-580 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm"
+                                    onClick={handleInitiateApprove}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-580 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                                 >
                                     <Check className="h-3.5 w-3.5" /> Approve
                                 </button>
@@ -964,5 +1019,17 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
 
             </div>
         </div>
+
+        {showApproveRatesModal && (
+            <ApproveDealerCommissionModal
+                isOpen={showApproveRatesModal}
+                dealer={dealer}
+                initialFee={custFeeInput}
+                initialPct={commPctInput}
+                onClose={() => setShowApproveRatesModal(false)}
+                onSaveAndApprove={handleSaveRatesAndApprove}
+            />
+        )}
+        </>
     );
 }

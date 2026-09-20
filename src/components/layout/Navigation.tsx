@@ -35,7 +35,6 @@ interface NavbarProps {
   onNavigate: (hash: string) => void;
   dealerSession: any;
   adminSession?: any;
-  customerSession?: any;
   onLogout: () => void;
   cartCount?: number;
   onOpenCart?: () => void;
@@ -46,7 +45,6 @@ export function Navbar({
   onNavigate,
   dealerSession,
   adminSession,
-  customerSession,
   onLogout,
   cartCount = 0,
   onOpenCart
@@ -55,97 +53,7 @@ export function Navbar({
   const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [customerUnreadCount, setCustomerUnreadCount] = useState(0);
-  const seenNotifIds = useRef<Set<string>>(new Set());
-  const isFirstLoad = useRef<boolean>(true);
 
-  const playCustomerChime = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const now = ctx.currentTime;
-
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(587.33, now);
-      gain1.gain.setValueAtTime(0.45, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.35);
-
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(880.00, now + 0.08);
-      gain2.gain.setValueAtTime(0, now);
-      gain2.gain.setValueAtTime(0.4, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now + 0.08);
-      osc2.stop(now + 0.55);
-    } catch (e) {
-      console.warn("Customer chime could not be played:", e);
-    }
-  };
-
-  useEffect(() => {
-    if (!customerSession) {
-      setCustomerUnreadCount(0);
-      seenNotifIds.current.clear();
-      isFirstLoad.current = true;
-      return;
-    }
-
-    const fetchUnread = async () => {
-      try {
-        const email = customerSession.email;
-        const token = typeof window !== 'undefined' ? localStorage.getItem('voltrix_auth_token') : '';
-        const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-        if (currentHash === '#notifications') {
-          await fetch('/api/customer/notifications/read-all', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...authHeader },
-            body: JSON.stringify({ email })
-          });
-          setCustomerUnreadCount(0);
-          return;
-        }
-
-        const res = await fetch(`/api/customer/notifications?email=${encodeURIComponent(email)}`, {
-          headers: authHeader
-        });
-        if (res.ok) {
-          const data = await res.json();
-          let gotNewUnread = false;
-          data.forEach((notif: any) => {
-            if (!seenNotifIds.current.has(notif.id)) {
-              seenNotifIds.current.add(notif.id);
-              if (!notif.isRead && !isFirstLoad.current) {
-                gotNewUnread = true;
-              }
-            }
-          });
-          if (gotNewUnread) {
-            playCustomerChime();
-          }
-          const unread = data.filter((n: any) => !n.isRead).length;
-          setCustomerUnreadCount(unread);
-          isFirstLoad.current = false;
-        }
-      } catch (err) {
-        console.warn("Error fetching customer notifications in Navbar:", err);
-      }
-    };
-
-    fetchUnread();
-    // SSE handles future pushes — no setInterval needed
-  }, [customerSession, currentHash]);
 
 
   // Close dropdown on click outside
@@ -292,55 +200,12 @@ export function Navbar({
                     Logout
                   </button>
                 </div>
-              ) : customerSession ? (
-                <div className="flex items-center space-x-1.5 rounded-lg p-1 border bg-slate-50 border-slate-200 text-slate-800 shadow-sm font-sans">
-                  <button
-                    onClick={() => handleLinkClick('#notifications')}
-                    className="relative p-1.5 text-slate-600 hover:text-brand-green active:scale-95 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
-                    aria-label="View notifications"
-                    title="Customer Notifications"
-                  >
-                    <Bell className={`h-4.5 w-4.5 ${customerUnreadCount > 0 ? 'text-amber-500 animate-bounce' : 'text-slate-500'}`} />
-                    {customerUnreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white ring-1 ring-white">
-                        {customerUnreadCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleLinkClick('#profile')}
-                    className="px-2 py-1 font-mono text-[9px] rounded bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase transition-colors cursor-pointer border-none"
-                    title="Go to Client Space"
-                  >
-                    CLIENT
-                  </button>
-                  <span
-                    onClick={() => handleLinkClick('#profile')}
-                    className="text-xs font-bold truncate max-w-[130px] text-slate-800 cursor-pointer hover:text-emerald-600 transition-colors px-1"
-                    title="Go to Client Space"
-                  >
-                    {customerSession.name}
-                  </span>
-                  <button
-                    onClick={() => handleLinkClick('#profile')}
-                    className="rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-900 transition-all cursor-pointer border-none"
-                  >
-                    Inquiries
-                  </button>
-                  <span className="text-slate-350 select-none">|</span>
-                  <button
-                    onClick={() => setShowLogoutConfirmModal(true)}
-                    className="rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all cursor-pointer border-none bg-[#E2E8F0] text-slate-500 hover:bg-slate-200"
-                  >
-                    Logout
-                  </button>
-                </div>
               ) : (
                 <button
                   onClick={() => handleLinkClick('#login')}
                   className="rounded-lg px-5 py-2 font-sans text-[11px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer border border-[#0A2342]/20 bg-brand-green text-white hover:bg-brand-green/90 shadow-sm"
                 >
-                  Login / Signup
+                  Portal Login
                 </button>
               )}
             </div>
@@ -363,29 +228,6 @@ export function Navbar({
                 >
                   {adminSession.name}
                 </button>
-              ) : customerSession ? (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleLinkClick('#notifications')}
-                    className="relative p-1.5 text-slate-600 hover:text-brand-green active:scale-95 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
-                    aria-label="View notifications"
-                    title="Customer Notifications"
-                  >
-                    <Bell className={`h-5 w-5 ${customerUnreadCount > 0 ? 'text-amber-500 animate-bounce' : 'text-slate-500'}`} />
-                    {customerUnreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white ring-1 ring-white">
-                        {customerUnreadCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleLinkClick('#profile')}
-                    className="text-[10px] bg-emerald-50 border border-brand-green/35 text-brand-green font-extrabold uppercase px-2.5 py-1.5 rounded truncate max-w-[90px] transition-all cursor-pointer font-sans"
-                    title="Go back to Client Space"
-                  >
-                    {customerSession.name}
-                  </button>
-                </div>
               ) : (
                 <button
                   onClick={() => handleLinkClick('#login')}
@@ -409,8 +251,8 @@ export function Navbar({
           { label: 'Products', hash: '#products', icon: Briefcase },
           { label: 'AI Support', hash: '#ai-support', icon: Sparkles },
           {
-            label: dealerSession ? 'Partner' : adminSession ? 'Admin' : 'Account',
-            hash: dealerSession ? '#dealer-portal' : adminSession ? '#admin' : customerSession ? '#profile' : '#login',
+            label: dealerSession ? 'Partner' : adminSession ? 'Admin' : 'Login',
+            hash: dealerSession ? '#dealer-portal' : adminSession ? '#admin' : '#login',
             icon: User
           },
         ].map((item) => {
