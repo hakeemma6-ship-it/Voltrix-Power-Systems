@@ -201,6 +201,14 @@ function AppContent() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash || '#home';
+      if (hash === '#privacy-policy') {
+        window.location.href = '/privacy-policy';
+        return;
+      }
+      if (hash === '#terms-and-conditions') {
+        window.location.href = '/terms-and-conditions';
+        return;
+      }
       if (hash !== '#login' && hash !== '#home') sessionStorage.setItem('login_redirect_hash', hash);
       setCurrentHash(hash);
       if (hash.startsWith('#blog/')) setActiveSlug(hash.replace('#blog/', ''));
@@ -607,7 +615,7 @@ function AppContent() {
       </main>
 
       {/* Footer */}
-      {!isPortalView && (activeHash === '#home' || activeHash === '' || !activeHash || activeHash === '#') && (
+      {!isPortalView && (
         <Footer onNavigate={handleNavigate} currentHash={currentHash} />
       )}
 

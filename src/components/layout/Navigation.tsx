@@ -170,6 +170,10 @@ export function Navbar({
   ];
 
   const handleLinkClick = (hash: string) => {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.location.href = '/' + hash;
+      return;
+    }
     onNavigate(hash);
     setIsDropdownOpen(false);
   };
@@ -489,6 +493,14 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
   const gstin = settings.gstin || '36AEPPI5022R1ZY';
   const companyAddress = settings.address || '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad, Telangana – 500043';
 
+  const handleNav = (hash: string) => {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.location.href = '/' + hash;
+      return;
+    }
+    onNavigate(hash);
+  };
+
   return (
     <footer className="relative border-t-2 border-emerald-500 bg-[#0A2342] text-slate-300 overflow-hidden font-sans mb-16 lg:mb-0">
       {/* Subtle top indicator bar */}
@@ -503,7 +515,7 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
           {/* Column 1: FORTUNE TRADERS Identity & GST Details */}
           <div className="space-y-6 flex flex-col justify-between h-full">
             <div className="space-y-4">
-              <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={() => onNavigate('#home')}>
+              <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={() => handleNav('#home')}>
                 <div className="w-9 h-9 bg-slate-800 flex items-center justify-center rounded-sm rotate-45 border border-emerald-500/50 group-hover:scale-105 group-hover:border-emerald-400 transition-transform duration-300">
                   <span className="text-emerald-400 font-black text-lg -rotate-45">V</span>
                 </div>
@@ -546,41 +558,51 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
             </div>
           </div>
 
-          {/* Column 3: Customer portals & Support */}
+          {/* Column 2: Customer portals, Support & Legal Policies */}
           <div className="space-y-4 text-left">
             <h3 className="font-display font-bold text-white uppercase tracking-wider text-xs border-l-2 border-emerald-500 pl-2.5">
               Sales & Support
             </h3>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
-                <button onClick={() => onNavigate('#dealer-portal')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
+                <button onClick={() => handleNav('#dealer-portal')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
                   Dealer Login Center
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('#dealer-portal')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
+                <button onClick={() => handleNav('#dealer-portal')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
                   Join Partner Network
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('#ai-support')} className="text-slate-300 hover:text-emerald-300 hover:pl-1 transition-all duration-200 text-left block font-bold flex items-center space-x-1 border-none bg-transparent cursor-pointer">
+                <button onClick={() => handleNav('#ai-support')} className="text-slate-300 hover:text-emerald-300 hover:pl-1 transition-all duration-200 text-left block font-bold flex items-center space-x-1 border-none bg-transparent cursor-pointer">
                   <span>AI Assistant Desk (24/7)</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('#contact')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
+                <button onClick={() => handleNav('#contact')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
                   Direct Technical Inquiry
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('#products')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
+                <button onClick={() => handleNav('#products')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
                   Browse Power Products
                 </button>
+              </li>
+              <li className="pt-2 border-t border-slate-800">
+                <a href="/privacy-policy" className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="/terms-and-conditions" className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block">
+                  Terms & Conditions
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Premium Interactive Location/Contact Card */}
+          {/* Column 3: Premium Interactive Location/Contact Card */}
           <div className="space-y-4 text-left">
             <h3 className="font-display font-bold text-white uppercase tracking-wider text-xs border-l-2 border-emerald-500 pl-2.5">
               Hyderabad Hub Office
@@ -643,6 +665,22 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Bottom Legal & Copyright Bar */}
+        <div className="mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400 font-medium">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <span>© {currentYear} Voltrix Power Systems. Operated by Fortune Traders. All rights reserved.</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">
+              Privacy Policy
+            </a>
+            <span className="text-slate-600">•</span>
+            <a href="/terms-and-conditions" className="hover:text-emerald-400 transition-colors">
+              Terms & Conditions
+            </a>
           </div>
         </div>
       </div>
