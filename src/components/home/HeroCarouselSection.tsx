@@ -12,7 +12,8 @@ import {
   Sun,
   Wrench,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  Phone
 } from 'lucide-react';
 
 const firstSliderImg = "https://res.cloudinary.com/a6ppmzjz/image/upload/v1783547892/voltrix_power_systems/First_Slider.png";
@@ -77,11 +78,11 @@ export function HeroCarouselSection({ onNavigate }: HeroCarouselSectionProps) {
                 </button>
 
                 <button
-                  onClick={() => onNavigate('#ai-support')}
+                  onClick={() => onNavigate('#contact')}
                   className="h-11 sm:h-12 w-full sm:w-auto px-6 sm:px-7 font-extrabold text-xs uppercase tracking-widest rounded-md bg-[#0A2342] hover:bg-[#05182d] text-white border border-slate-700/60 transition-all duration-305 flex items-center justify-center gap-2 cursor-pointer shadow-md hover:scale-102 active:scale-98"
                 >
-                  <Sparkles className="h-4 w-4 shrink-0 text-emerald-400 animate-pulse" />
-                  <span>Ask Voltrix AI</span>
+                  <Phone className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>Contact Technical Desk</span>
                 </button>
               </div>
             </div>
@@ -172,7 +173,7 @@ export function HeroCarouselSection({ onNavigate }: HeroCarouselSectionProps) {
               {
                 id: 'stabilizer',
                 slug: 'stabilizers',
-                title: 'Stabilizers',
+                title: 'SERVO STABILIZERS',
                 description: '±0.5% high-precision correction for CNC, Laser & medical equipment.',
                 icon: Activity,
                 badge: 'Precision',

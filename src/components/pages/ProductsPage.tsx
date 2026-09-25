@@ -13,10 +13,6 @@ import {
 } from 'lucide-react';
 import { SubCategoryProduct, Category } from '../../data/categoriesData';
 import { resolveImageUrl } from '../../utils/image';
-import {
-  masterConfig,
-  getProductVariant
-} from '../../data/servoProductsData';
 
 const getCategoryGradient = (slug: string) => {
   switch (slug) {
@@ -128,7 +124,6 @@ export default function ProductsPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedProduct, setSelectedProduct] = useState<SubCategoryProduct | null>(null);
   const [parentCategory, setParentCategory] = useState<Category | null>(null);
-  const [activeServoVariant, setActiveServoVariant] = useState<number | string | null>(null);
 
   const [orderForm, setOrderForm] = useState({
     fullName: '',
@@ -176,13 +171,21 @@ export default function ProductsPage({
   useEffect(() => {
     setIsLoading(true);
     fetch('/api/categories')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return [];
+        return res.json();
+      })
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setCategories(data);
+        } else {
+          setCategories([]);
         }
       })
-      .catch(err => console.error("Error loading categories:", err))
+      .catch(err => {
+        console.error("Error loading categories:", err);
+        setCategories([]);
+      })
       .finally(() => {
         setIsLoading(false);
       });
@@ -202,12 +205,8 @@ export default function ProductsPage({
       if (match) {
         setSelectedProduct(match);
         setParentCategory(match.parent);
-        const isServo = !!masterConfig[match.id];
-        const initialVariant = isServo ? masterConfig[match.id].defaultVariant : null;
-        setActiveServoVariant(initialVariant);
-        const servoVariantData = isServo && initialVariant !== null ? getProductVariant(match.id, initialVariant) : null;
-        const initialCapacityRating = servoVariantData?.specs.find(s => s.label === 'Power')?.value ||
-          match.specs["Capacity"] || match.specs["Rating"] || match.specs["Power"] || match.specs["Size Range"] || 'Standard Size';
+        const initialCapacityRating =
+          match.specs?.["Capacity"] || match.specs?.["Rating"] || match.specs?.["Power"] || match.specs?.["Size Range"] || 'Standard Size';
 
         setOrderForm(prev => ({
           ...prev,
@@ -220,11 +219,13 @@ export default function ProductsPage({
         setSubmitSuccess(null);
         setSubmitError(null);
         window.scrollTo({ top: 0, behavior: 'instant' });
+      } else {
+        setSelectedProduct(null);
+        setParentCategory(null);
       }
     } else {
       setSelectedProduct(null);
       setParentCategory(null);
-      setActiveServoVariant(null);
     }
   }, [queryProductSlug, allFlattenedProducts, dealerSession, customerSession, adminSession]);
 
@@ -317,12 +318,8 @@ export default function ProductsPage({
   const handleOpenQuoteForProduct = (prod: SubCategoryProduct & { parent: Category }) => {
     setSelectedProduct(prod);
     setParentCategory(prod.parent);
-    const isServoProd = !!masterConfig[prod.id];
-    const initialVariant = isServoProd ? masterConfig[prod.id].defaultVariant : null;
-    setActiveServoVariant(initialVariant);
-    const servoVariantData = isServoProd && initialVariant !== null ? getProductVariant(prod.id, initialVariant) : null;
-    const initialCapacityRating = servoVariantData?.specs.find(s => s.label === 'Power')?.value ||
-      prod.specs["Capacity"] || prod.specs["Rating"] || prod.specs["Power"] || prod.specs["Size Range"] || 'Standard Size';
+    const initialCapacityRating =
+      prod.specs?.["Capacity"] || prod.specs?.["Rating"] || prod.specs?.["Power"] || prod.specs?.["Size Range"] || 'Standard Size';
 
     setOrderForm(prev => ({
       ...prev,
@@ -365,25 +362,38 @@ export default function ProductsPage({
     return matchesSearch && matchesCategory;
   });
 
-  const isServo = selectedProduct ? !!masterConfig[selectedProduct.id] : false;
-  const servoCfg = isServo && selectedProduct ? masterConfig[selectedProduct.id] : null;
-  const activeVar = activeServoVariant !== null ? activeServoVariant : (servoCfg ? servoCfg.defaultVariant : null);
-  const servoData = (isServo && selectedProduct && activeVar !== null) ? getProductVariant(selectedProduct.id, activeVar) : null;
-
-  const displayImage = servoData ? resolveImageUrl(servoData.image) : selectedProduct?.image;
-  const displayPower = servoData?.specs.find(s => s.label === 'Power')?.value || (activeVar ? `${activeVar} KVA` : '');
-  const displayTitle = (isServo && servoCfg && displayPower)
-    ? `${displayPower} ${servoCfg.baseTitle}`
-    : (selectedProduct?.name || '');
-  const displayFeatures = servoData ? servoData.features : (selectedProduct?.features || []);
-  const displaySpecs: Record<string, string> = servoData
-    ? Object.fromEntries(servoData.specs.map(s => [s.label, s.value]))
-    : (selectedProduct?.specs || {});
+  const displayImage = selectedProduct?.image ? resolveImageUrl(selectedProduct.image) : '';
+  const displayTitle = selectedProduct?.name || '';
+  const displayFeatures = selectedProduct?.features || [];
+  const displaySpecs: Record<string, string> = selectedProduct?.specs || {};
+  const displayApplications: string[] = (selectedProduct as any)?.applications || [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-4 pb-16 sm:px-6 lg:px-8 font-sans" id="products-catalog-section">
       <AnimatePresence mode="wait">
-        {!selectedProduct ? (
+        {queryProductSlug && !selectedProduct && !isLoading ? (
+          <motion.div
+            key="notfound"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="text-center py-20 border border-slate-200 rounded-3xl bg-white shadow-xs p-8 max-w-xl mx-auto space-y-4 my-8 font-sans"
+          >
+            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto border border-amber-200">
+              <AlertCircle className="h-8 w-8 text-amber-600" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Data Not Found</h2>
+            <p className="text-slate-500 text-sm">
+              The requested product <span className="font-mono font-bold text-slate-700">&quot;{queryProductSlug}&quot;</span> could not be found in our database.
+            </p>
+            <button
+              onClick={handleCloseDetails}
+              className="px-6 py-2.5 bg-brand-green hover:bg-emerald-600 text-white font-bold text-xs uppercase rounded-xl transition cursor-pointer border-none"
+            >
+              Return to Products Catalog
+            </button>
+          </motion.div>
+        ) : !selectedProduct ? (
           <motion.div
             key="list"
             initial={{ opacity: 0 }}
@@ -450,7 +460,7 @@ export default function ProductsPage({
                     {[
                       { label: "All Products", slug: "All" },
                       { label: "Inverters", slug: "inverter" },
-                      { label: "Stabilizers", slug: "stabilizers" },
+                      { label: "SERVO STABILIZERS", slug: "stabilizers" },
                       { label: "UPS Systems", slug: "ups" },
                       { label: "Batteries", slug: "batteries" },
                       { label: "Solar Systems", slug: "solar-panels" },
@@ -610,12 +620,23 @@ export default function ProductsPage({
                 })}
               </div>
             ) : (
-              <div className="text-center py-20 border border-slate-200 rounded-2xl bg-slate-50">
-                <BadgeInfo className="h-10 w-10 text-slate-400 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-slate-800">No Products Found</h3>
-                <p className="text-slate-500 text-xs mt-1">
-                  Try adjusting filters or search query.
+              <div className="text-center py-20 border border-slate-200 rounded-3xl bg-white shadow-xs p-8 max-w-xl mx-auto space-y-3 font-sans">
+                <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-2" />
+                <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Data Not Found</h3>
+                <p className="text-slate-500 text-xs">
+                  {allFlattenedProducts.length === 0
+                    ? "No products currently available in the database."
+                    : "No products found matching your search query or selected filter in the database."}
                 </p>
+                {selectedCategoryFilter !== 'All' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategoryFilter('All')}
+                    className="mt-3 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer border-none"
+                  >
+                    Reset Category Filter
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
@@ -675,13 +696,29 @@ export default function ProductsPage({
                     </ul>
                   </div>
                 )}
+
+                {/* Target Applications */}
+                {displayApplications && displayApplications.length > 0 && (
+                  <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3">
+                    <h3 className="font-bold text-xs uppercase text-slate-800 tracking-wider border-l-2 border-brand-green pl-2.5 font-sans">
+                      Target Applications
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {displayApplications.map((app, idx) => (
+                        <span key={idx} className="bg-white border border-slate-200 text-slate-700 font-medium px-2.5 py-1 rounded-lg text-xs shadow-2xs">
+                          {app}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Right Column: Title, Metrics, Capacity Buttons, Specifications Table, & Quote CTA */}
+              {/* Right Column: Title, Metrics, Specifications Table, & Quote CTA */}
               <div className="lg:col-span-7 space-y-6">
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold tracking-wider uppercase bg-brand-green/10 text-brand-green px-2.5 py-1 rounded inline-block">
-                    {parentCategory?.name || (isServo ? 'Servo Stabilizers' : 'Power Solutions')} Series
+                    {parentCategory?.name || 'Power Solutions'} Series
                   </span>
                   <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 uppercase tracking-tight">
                     {displayTitle}
@@ -691,68 +728,37 @@ export default function ProductsPage({
                   </p>
                 </div>
 
-                {/* Stabilizer Key Metrics Box */}
-                {isServo && (
+                {/* Dynamic Key Metrics Box from DB Specs */}
+                {(selectedProduct.specs?.['Capacity'] || selectedProduct.specs?.['Input'] || selectedProduct.specs?.['Input Range'] || selectedProduct.specs?.['Efficiency'] || selectedProduct.specs?.['Output Voltage']) && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 border border-slate-200/90 p-3.5 rounded-2xl text-xs">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Input Range</span>
-                      <span className="font-mono font-bold text-slate-800 flex items-center gap-1.5">
-                        <Gauge className="h-3.5 w-3.5 text-brand-green shrink-0" />
-                        <span>{selectedProduct.specs?.['Input'] || selectedProduct.specs?.['Input Range'] || selectedProduct.specs?.['Input Voltage'] || servoData?.specs.find(s => s.label.includes('Input'))?.value || '340V - 480V'}</span>
-                      </span>
-                    </div>
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Capacity Range</span>
-                      <span className="font-mono font-black text-brand-green flex items-center gap-1.5">
-                        <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                        <span>{selectedProduct.specs?.['Capacity'] || selectedProduct.specs?.['Capacity Range'] || (servoCfg ? `${servoCfg.variants[0]} - ${servoCfg.variants[servoCfg.variants.length - 1]} KVA` : 'Standard')}</span>
-                      </span>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1 space-y-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Selected Capacity</span>
-                      <span className="font-mono font-extrabold text-[#0A2342] block">
-                        {displayPower || `${activeVar} KVA`}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Interactive KVA Capacity Buttons if Servo Product */}
-                {isServo && servoCfg && servoCfg.variants.length > 0 && (
-                  <div className="bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <SlidersHorizontal className="h-3.5 w-3.5 text-brand-green" />
-                        <span>Select KVA Capacity:</span>
-                      </span>
-                      <span className="text-xs font-mono font-bold text-brand-green">
-                        Selected: {displayPower}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {servoCfg.variants.map((v) => {
-                        const isSel = String(activeVar) === String(v);
-                        return (
-                          <button
-                            key={String(v)}
-                            type="button"
-                            onClick={() => {
-                              setActiveServoVariant(v);
-                              const vData = getProductVariant(selectedProduct.id, v);
-                              const pVal = vData?.specs.find(s => s.label === 'Power')?.value || `${v} KVA`;
-                              setOrderForm(prev => ({ ...prev, capacityRating: pVal }));
-                            }}
-                            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold transition border cursor-pointer ${
-                              isSel
-                                ? 'bg-brand-green text-white border-brand-green shadow-xs scale-105 font-black ring-2 ring-emerald-300/40'
-                                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                            }`}
-                          >
-                            {v} <span className="text-[9px] font-sans opacity-80">kVA</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {selectedProduct.specs?.['Capacity'] && (
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Capacity</span>
+                        <span className="font-mono font-black text-brand-green flex items-center gap-1.5">
+                          <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                          <span>{selectedProduct.specs['Capacity']}</span>
+                        </span>
+                      </div>
+                    )}
+                    {(selectedProduct.specs?.['Input'] || selectedProduct.specs?.['Input Range'] || selectedProduct.specs?.['Input DC Range'] || selectedProduct.specs?.['Input Voltage']) && (
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Input Voltage</span>
+                        <span className="font-mono font-bold text-slate-800 flex items-center gap-1.5">
+                          <Gauge className="h-3.5 w-3.5 text-brand-green shrink-0" />
+                          <span>{selectedProduct.specs['Input'] || selectedProduct.specs['Input Range'] || selectedProduct.specs['Input DC Range'] || selectedProduct.specs['Input Voltage']}</span>
+                        </span>
+                      </div>
+                    )}
+                    {(selectedProduct.specs?.['Efficiency'] || selectedProduct.specs?.['Phase'] || selectedProduct.specs?.['Output Voltage']) && (
+                      <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                          {selectedProduct.specs?.['Efficiency'] ? 'Efficiency' : (selectedProduct.specs?.['Phase'] ? 'Phase' : 'Output')}
+                        </span>
+                        <span className="font-mono font-extrabold text-[#0A2342] block">
+                          {selectedProduct.specs?.['Efficiency'] || selectedProduct.specs?.['Phase'] || selectedProduct.specs?.['Output Voltage']}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -766,14 +772,20 @@ export default function ProductsPage({
                       {Object.keys(displaySpecs).length} Parameters
                     </span>
                   </div>
-                  <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs">
-                    {Object.entries(displaySpecs).map(([key, val], idx) => (
-                      <div key={key} className={`grid grid-cols-2 p-3.5 text-xs ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                        <span className="font-bold text-slate-500">{key}</span>
-                        <span className="font-semibold text-slate-900 text-right sm:text-left">{val}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {Object.keys(displaySpecs).length > 0 ? (
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs">
+                      {Object.entries(displaySpecs).map(([key, val], idx) => (
+                        <div key={key} className={`grid grid-cols-2 p-3.5 text-xs ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                          <span className="font-bold text-slate-500">{key}</span>
+                          <span className="font-semibold text-slate-900 text-right sm:text-left">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xs text-slate-500">
+                      Technical specifications not found in database for this model.
+                    </div>
+                  )}
                 </div>
 
                 {/* Prominent Quote CTA Card - Shown for all users (logged in or not) */}

@@ -26,7 +26,6 @@ import { CompanySettingsProvider, useCompanySettings } from './context/CompanySe
 
 // Layout & Home
 import { Navbar, Footer } from './components/layout/Navigation';
-import { DedicatedAiSupport, FloatingChatBubble } from './components/ai/AiChatCenter';
 import IndustriesWePower from './components/home/IndustriesWePower';
 import { HeroCarouselSection } from './components/home/HeroCarouselSection';
 
@@ -68,12 +67,9 @@ function AppContent() {
   const gstin = settings.gstin || '36AEPPI5022R1ZY';
   const companyAddress = settings.address || '4-15 Shop No. 5, X Road, Opp. Bata, Gandi Maisamma, Hyderabad, Telangana – 500043';
 
-  const [currentHash, setCurrentHash] = useState<string>(() => {
-    if (typeof window !== 'undefined') return window.location.hash || '#home';
-    return '#home';
-  });
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [currentHash, setCurrentHash] = useState<string>('#home');
   const activeHash = currentHash.split('?')[0];
-  const [aiSupportNavKey, setAiSupportNavKey] = useState<number>(0);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
   // Sessions
@@ -140,9 +136,11 @@ function AppContent() {
     restoreSession();
   }, []);
 
-  const isPortalView = (adminSession && activeHash.startsWith('#admin')) ||
+  const isPortalView = isMounted && (
+    (adminSession && activeHash.startsWith('#admin')) ||
     (dealerSession && activeHash === '#dealer-portal') ||
-    (isSessionLoading && (activeHash.startsWith('#admin') || activeHash === '#dealer-portal'));
+    (isSessionLoading && (activeHash.startsWith('#admin') || activeHash === '#dealer-portal'))
+  );
 
   // Contact form state
   const [homeContact, setHomeContact] = useState({ name: '', email: '', phone: '', subject: 'Main Page Inquiry', message: '' });
@@ -194,8 +192,9 @@ function AppContent() {
     fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: currentHash }) }).catch(() => { });
   }, [currentHash]);
 
-  // Hash change listener
+  // Hash change listener & client mount synchronization
   useEffect(() => {
+    setIsMounted(true);
     const handleHashChange = () => {
       const hash = window.location.hash || '#home';
       if (hash === '#privacy-policy') {
@@ -215,11 +214,11 @@ function AppContent() {
       if (hash.startsWith('#blog/')) setActiveSlug(hash.replace('#blog/', ''));
       else setActiveSlug(null);
     };
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [currentHash]);
+  }, []);
 
   // SEO updates
   useEffect(() => {
@@ -230,7 +229,7 @@ function AppContent() {
     else if (hash === '#dealer-register') { title = "Dealer Registration | VOLTRIX"; desc = "Register as an authorized Voltrix dealer and join our distribution network."; }
     else if (hash === '#dealer-portal') { title = "Dealer Portal | VOLTRIX Power Systems"; desc = "Manage clients, create quotations, and file orders as an authorized Voltrix dealer."; }
     else if (hash.startsWith('#admin')) { title = "Admin Dashboard | VOLTRIX"; desc = "Administrative panel for managing customers, dealers, orders, and quotations."; }
-    else if (hash.startsWith('#categories')) { title = "Voltrix Industrial Power Categories"; desc = "Explore our premium power portfolio including UPS, stabilizers, solar, and battery systems."; }
+    else if (hash.startsWith('#categories')) { title = "Voltrix Industrial Power Categories"; desc = "Explore our premium power portfolio including UPS, servo stabilizers, solar, and battery systems."; }
     else if (hash.startsWith('#servo-stabilizers')) { title = "Servo Controlled Voltage Stabilizers & Transformers | VOLTRIX"; desc = "Microprocessor-controlled oil-cooled, three-phase, single-phase servo stabilizers and constant voltage transformers up to 500kVA."; }
     else if (hash.startsWith('#products')) { title = "Voltrix Products Catalog"; desc = "Browse all Voltrix power solutions and submit order requests."; }
     else if (hash === '#contact') { title = "Contact Fortune Traders Hyderabad | VOLTRIX"; desc = "Get in touch with Fortune Traders, Gandhi Maisamma, Hyderabad."; }
@@ -246,8 +245,14 @@ function AppContent() {
     if (activeHash === '#login') {
       if (dealerSession) handleNavigate('#dealer-portal');
       else if (adminSession) handleNavigate('#admin');
-    } else if (['#profile', '#orders', '#quotations', '#support', '#security'].includes(activeHash)) {
-      handleNavigate('#home');
+    } else if (['#profile', '#orders', '#quotations', '#support', '#security', '#ai-support'].includes(activeHash)) {
+      if (activeHash === '#ai-support') {
+        if (dealerSession) handleNavigate('#dealer-portal');
+        else if (adminSession) handleNavigate('#admin');
+        else handleNavigate('#home');
+      } else {
+        handleNavigate('#home');
+      }
     }
   }, [activeHash, dealerSession, adminSession, isSessionLoading]);
 
@@ -255,7 +260,6 @@ function AppContent() {
     if (hash === '#login' && currentHash && currentHash !== '#login' && currentHash !== '#home') {
       sessionStorage.setItem('login_redirect_hash', currentHash);
     }
-    if (hash === '#ai-support') setAiSupportNavKey(prev => prev + 1);
     window.location.hash = hash;
   };
 
@@ -287,7 +291,7 @@ function AppContent() {
   };
 
   return (
-    <div className={`min-h-screen bg-white text-slate-900 flex flex-col justify-between relative font-sans ${isPortalView ? 'h-screen overflow-hidden' : 'overflow-x-hidden'}`} id="voltrix-viewport">
+    <div className={`min-h-screen bg-white text-slate-900 flex flex-col justify-between relative font-sans ${isPortalView ? 'h-screen overflow-hidden' : 'overflow-x-hidden'}`} id="voltrix-app-root">
 
       {/* Navbar */}
       {!isPortalView && activeHash !== '#login' && (
@@ -397,14 +401,6 @@ function AppContent() {
           </React.Suspense>
         )}
 
-        {/* AI SUPPORT */}
-        {activeHash === '#ai-support' && (
-          <DedicatedAiSupport
-            key={`ai-support-${aiSupportNavKey}`}
-            activeSession={dealerSession || adminSession}
-            onNavigate={handleNavigate}
-          />
-        )}
 
         {/* CATEGORIES */}
         {activeHash.startsWith('#categories') && (

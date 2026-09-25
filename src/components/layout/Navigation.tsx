@@ -73,7 +73,6 @@ export function Navbar({
     { label: 'Home', hash: '#home' },
     { label: 'Categories', hash: '#categories' },
     { label: 'Products', hash: '#products' },
-    { label: 'AI Support', hash: '#ai-support' },
     { label: 'Contact Us', hash: '#contact' },
   ];
 
@@ -117,7 +116,6 @@ export function Navbar({
               {/* Primary Direct Menu Buttons */}
               {primaryItems.map((item) => {
                 const isActive = currentHash === item.hash || (item.hash !== '#home' && currentHash.startsWith(item.hash));
-                const isAi = item.label === 'AI Support';
                 return (
                   <button
                     key={item.label}
@@ -128,9 +126,6 @@ export function Navbar({
                       : 'text-slate-600 hover:text-[#0A2342] hover:border-b-[3px] hover:border-brand-green/30 pb-1.5'
                       }`}
                   >
-                    {isAi && (
-                      <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                    )}
                     {item.label}
                   </button>
                 );
@@ -249,7 +244,7 @@ export function Navbar({
           { label: 'Home', hash: '#home', icon: Home },
           { label: 'Categories', hash: '#categories', icon: Layers },
           { label: 'Products', hash: '#products', icon: Briefcase },
-          { label: 'AI Support', hash: '#ai-support', icon: Sparkles },
+          { label: 'Contact', hash: '#contact', icon: Phone },
           {
             label: dealerSession ? 'Partner' : adminSession ? 'Admin' : 'Login',
             hash: dealerSession ? '#dealer-portal' : adminSession ? '#admin' : '#login',
@@ -270,7 +265,7 @@ export function Navbar({
                   : 'text-slate-400 hover:text-slate-600'
                   }`}
               >
-                <IconComp className={`h-5 w-5 stroke-[2.3px] ${item.label === 'AI Support' && isActive ? 'animate-pulse' : ''}`} />
+                <IconComp className="h-5 w-5 stroke-[2.3px]" />
               </div>
               <span
                 className={`text-[9.5px] font-black uppercase tracking-tight transition-colors duration-200 leading-none mt-0.5 ${isActive ? 'text-brand-green' : 'text-slate-500'
@@ -416,11 +411,7 @@ export function Footer({ onNavigate, currentHash }: { onNavigate: (hash: string)
                   Join Partner Network
                 </button>
               </li>
-              <li>
-                <button onClick={() => handleNav('#ai-support')} className="text-slate-300 hover:text-emerald-300 hover:pl-1 transition-all duration-200 text-left block font-bold flex items-center space-x-1 border-none bg-transparent cursor-pointer">
-                  <span>AI Assistant Desk (24/7)</span>
-                </button>
-              </li>
+
               <li>
                 <button onClick={() => handleNav('#contact')} className="text-slate-300 hover:text-emerald-400 hover:pl-1 transition-all duration-200 text-left block border-none bg-transparent cursor-pointer">
                   Direct Technical Inquiry

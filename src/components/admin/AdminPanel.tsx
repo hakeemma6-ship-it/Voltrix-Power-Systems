@@ -49,7 +49,7 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-700',
 };
 
-const PRODUCT_CATEGORIES = ['UPS Systems', 'Servo Stabilizers', 'Solar Inverters', 'Battery Systems', 'Online UPS', 'Hybrid Solar', 'Industrial Stabilizers', 'Other'];
+const PRODUCT_CATEGORIES = ['UPS Systems', 'Servo Stabilizers', 'Solar Inverters', 'Battery Systems', 'Online UPS', 'Hybrid Solar', 'Industrial Servo Stabilizers', 'Other'];
 
 function Badge({ status }: { status: string }) {
   return (
@@ -464,19 +464,26 @@ function CustomersTab({ dealers }: { dealers: any[] }) {
 
                       {c.assignedDealers && c.assignedDealers.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5 mt-2 items-center">
-                          <Check className="h-3 w-3 text-emerald-600 shrink-0" />
-                          <span className="text-xs text-slate-500 font-bold mr-1">Dealers:</span>
-                          {c.assignedDealers.map((ad: any) => (
-                            <span key={ad.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold">
-                              {ad.name}
-                            </span>
-                          ))}
+                          <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>CUSTOMER ASSIGNED: {c.assignedDealers.map((ad: any) => ad.name).join(', ')}</span>
+                          </span>
                         </div>
                       ) : c.assignedDealerName ? (
-                        <p className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">
-                          <Check className="h-3 w-3" />Assigned to: {c.assignedDealerName}
-                        </p>
-                      ) : null}
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>CUSTOMER ASSIGNED: {c.assignedDealerName}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
+                            <Clock className="h-3 w-3 text-amber-600 shrink-0" />
+                            <span>Unassigned Customer Lead</span>
+                          </span>
+                        </div>
+                      )}
                       {c.notes && <p className="text-xs text-slate-400 mt-1 italic">{c.notes}</p>}
                     </div>
                   </div>
@@ -514,10 +521,11 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [assigning, setAssigning] = useState<string | null>(null);
-  const [assignDealer, setAssignDealer] = useState('');
+  const [assigningInquiryModal, setAssigningInquiryModal] = useState<any | null>(null);
+  const [dealerSearchQuery, setDealerSearchQuery] = useState('');
   const [addingCustomerId, setAddingCustomerId] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ id: string; msg: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ title: string; message: string; type?: 'success' | 'error' } | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('voltrix_auth_token') : '';
   const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -537,21 +545,67 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
 
   const approvedDealers = dealers.filter(d => d.status === 'approved');
 
-  const handleAssign = async (inquiryId: string) => {
-    if (!assignDealer) return;
+  const handleAssign = async (inquiryId: string, dealerIdToAssign: string, explicitDealerName?: string) => {
+    if (!dealerIdToAssign) return;
+    const targetDealer = approvedDealers.find(d => d.id === dealerIdToAssign);
+    const dealerName = explicitDealerName || targetDealer?.companyName || targetDealer?.name || 'Dealer';
+    const targetInq = inquiries.find(i => i.id === inquiryId);
+    const customerName = targetInq?.name || 'Customer';
+
+    // 1. Instant optimistic update (0ms UI feedback)
+    setInquiries(prev => prev.map(item => {
+      if (item.id === inquiryId) {
+        return {
+          ...item,
+          assignedDealerId: dealerIdToAssign,
+          assignedDealerName: dealerName,
+          status: 'assigned',
+        };
+      }
+      return item;
+    }));
+
+    setAssigningInquiryModal(null);
+
+    // 2. Show instant confirmation Toast & inline feedback
+    setToast({
+      title: 'CUSTOMER / INQUIRY ASSIGNED',
+      message: `Inquiry from "${customerName}" has been successfully assigned to ${dealerName}. Dealer notified via WhatsApp.`,
+      type: 'success'
+    });
+
+    setActionFeedback({
+      id: inquiryId,
+      msg: `CUSTOMER ASSIGNED: Successfully assigned to ${dealerName}!`,
+      type: 'success'
+    });
+
+    // 3. Fast non-blocking background sync
     try {
       const res = await fetch(`/api/inquiries/${inquiryId}/assign`, {
-        method: 'PATCH', headers,
-        body: JSON.stringify({ dealerId: assignDealer }),
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ dealerId: dealerIdToAssign }),
       });
       if (res.ok) {
-        await load();
-        setAssigning(null);
-        setAssignDealer('');
         onInquiriesChange?.();
+      } else {
+        const d = await res.json();
+        setToast({
+          title: 'ASSIGNMENT FAILED',
+          message: d.error || 'Failed to assign inquiry to dealer.',
+          type: 'error'
+        });
+        await load();
       }
-      else { const d = await res.json(); alert(d.error || 'Failed to assign.'); }
-    } catch { }
+    } catch {
+      setToast({
+        title: 'NETWORK ERROR',
+        message: 'Network error while assigning inquiry.',
+        type: 'error'
+      });
+      await load();
+    }
   };
 
   const handleAddCustomer = async (inq: any) => {
@@ -666,16 +720,22 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
                       </div>
                     )}
 
-                    {inq.assignedDealerName && (
-                      <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1">
-                        <Check className="h-3 w-3" />Assigned to: {inq.assignedDealerName}
-                      </p>
+                    {inq.assignedDealerName ? (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-black mt-2 shadow-2xs">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span>CUSTOMER & DEALER ASSIGNED: {inq.assignedDealerName}</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold mt-2">
+                        <Clock className="h-3 w-3 text-amber-600 shrink-0" />
+                        <span>Awaiting Dealer Assignment</span>
+                      </div>
                     )}
 
                     {/* Action Feedback Banner */}
                     {actionFeedback && actionFeedback.id === inq.id && (
-                      <div className={`mt-2 p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 ${actionFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                        {actionFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />}
+                      <div className={`mt-2 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${actionFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                        {actionFeedback.type === 'success' ? <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />}
                         <span>{actionFeedback.msg}</span>
                       </div>
                     )}
@@ -701,32 +761,137 @@ function InquiriesTab({ dealers, onInquiriesChange }: { dealers: any[]; onInquir
                       </span>
                     )}
 
-                    {/* Assign Dealer Action */}
-                    {assigning === inq.id ? (
-                      <div className="flex flex-col gap-2">
-                        <select value={assignDealer} onChange={e => setAssignDealer(e.target.value)} className="text-xs border-2 border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500">
-                          <option value="">Select dealer</option>
-                          {approvedDealers.map(d => <option key={d.id} value={d.id}>{d.companyName}</option>)}
-                        </select>
-                        <div className="flex gap-1">
-                          <button onClick={() => handleAssign(inq.id)} className="flex-1 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold cursor-pointer">Assign</button>
-                          <button onClick={() => setAssigning(null)} className="px-2 py-1 bg-slate-100 rounded-lg text-xs cursor-pointer"><X className="h-3 w-3" /></button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => { setAssigning(inq.id); setAssignDealer(inq.assignedDealerId || ''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 hover:border-emerald-300 hover:text-emerald-700 transition-colors cursor-pointer"
-                      >
-                        <ArrowRight className="h-3 w-3" />
-                        {inq.assignedDealerId ? 'Reassign' : 'Assign Dealer'}
-                      </button>
-                    )}
+                    {/* Assign Dealer Action: Single Click Modal Trigger */}
+                    <button
+                      onClick={() => {
+                        setAssigningInquiryModal(inq);
+                        setDealerSearchQuery('');
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A2342] hover:bg-[#05182d] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-slate-900/20 active:scale-95 cursor-pointer"
+                    >
+                      <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>{inq.assignedDealerId ? 'Reassign Dealer' : 'Assign Dealer'}</span>
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          <Pagination currentPage={page} totalItems={filtered.length} onPageChange={setPage} />
+
+          {/* Floating Toast Notification */}
+          {toast && (
+            <div className="fixed top-6 right-6 z-[999999] max-w-md w-full bg-[#0A2342] text-white border-2 border-emerald-400 rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 animate-slide-in">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-xs font-black uppercase tracking-wider text-emerald-400">{toast.title}</p>
+                <p className="text-xs text-slate-200 mt-0.5 leading-relaxed font-semibold">{toast.message}</p>
+              </div>
+              <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Assign Dealer Modal (1-Click Instant Assignment) */}
+          {assigningInquiryModal && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in font-sans">
+              <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden animate-scale-up" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="bg-[#0A2342] text-white p-6 relative">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                        <UserCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20">
+                          Single-Click Assignment
+                        </span>
+                        <h3 className="text-lg font-black uppercase tracking-tight text-white mt-0.5">
+                          Assign Dealer to Lead
+                        </h3>
+                      </div>
+                    </div>
+                    <button onClick={() => setAssigningInquiryModal(null)} className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Inquiry Info Strip */}
+                  <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-bold text-white">{assigningInquiryModal.name}</p>
+                      <p className="text-[11px] text-slate-300 font-mono mt-0.5">{assigningInquiryModal.phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-black text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                        {assigningInquiryModal.productCategory || assigningInquiryModal.productInterest || 'General'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dealers List */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                      Select Approved Dealer ({approvedDealers.length})
+                    </p>
+                    <span className="text-[11px] text-slate-400 font-semibold">Click any dealer to assign instantly</span>
+                  </div>
+
+                  {approvedDealers.length > 4 && (
+                    <input
+                      type="text"
+                      placeholder="Search dealers by name or city..."
+                      value={dealerSearchQuery}
+                      onChange={e => setDealerSearchQuery(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-medium"
+                    />
+                  )}
+
+                  <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                    {approvedDealers.length === 0 ? (
+                      <p className="text-center text-xs text-slate-400 py-6">No approved dealers found. Please approve dealer accounts first.</p>
+                    ) : (
+                      approvedDealers
+                        .filter(d => !dealerSearchQuery || d.companyName?.toLowerCase().includes(dealerSearchQuery.toLowerCase()) || d.city?.toLowerCase().includes(dealerSearchQuery.toLowerCase()))
+                        .map(d => {
+                          const isCurrentlyAssigned = assigningInquiryModal.assignedDealerId === d.id;
+                          return (
+                            <div
+                              key={d.id}
+                              className={`p-3.5 rounded-2xl border-2 transition-all flex items-center justify-between gap-3 ${isCurrentlyAssigned ? 'bg-emerald-50/70 border-emerald-400' : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-xs'}`}
+                            >
+                              <div className="min-w-0">
+                                <p className="text-xs font-black text-slate-900 truncate flex items-center gap-1.5">
+                                  <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                                  {d.companyName}
+                                </p>
+                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                  {d.name} · <span className="font-semibold text-slate-700">{d.city}</span> · <span className="font-mono text-slate-400">{d.phone}</span>
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => handleAssign(assigningInquiryModal.id, d.id, d.companyName)}
+                                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5 ${isCurrentlyAssigned ? 'bg-emerald-600 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/25'}`}
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                <span>{isCurrentlyAssigned ? 'Assigned ✓' : 'Assign'}</span>
+                              </button>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <Pagination currentPage={page} totalItems={filtered.length} onPageChange={setPage} />
         </>
       )}
@@ -1000,7 +1165,7 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
                       <input
                         type="number"
                         min={0}
-                        step={1}
+                        step="any"
                         placeholder="5, 10, 15..."
                         title="Fixed rate per assigned customer"
                         className="w-24 text-xs font-bold text-slate-800 bg-transparent focus:outline-none font-mono"
@@ -1025,7 +1190,7 @@ function DealersTab({ dealers, onDealersChange }: { dealers: any[]; onDealersCha
                         type="number"
                         min={0}
                         max={100}
-                        step={0.5}
+                        step="any"
                         placeholder="10, 15..."
                         title="Commission percentage on closed deals"
                         className="w-20 text-xs font-bold text-slate-800 bg-transparent focus:outline-none font-mono text-right"

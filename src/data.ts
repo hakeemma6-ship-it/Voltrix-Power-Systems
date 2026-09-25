@@ -30,7 +30,7 @@ Measure your local grid voltages across different parts of the day (morning load
 • **Choose Air Cooled if:** The machine resides in an indoor, climate-controlled setup, space is premium, or ease of relocatability on caster wheels is needed. Suitable up to 500 kVA.
 • **Choose Oil Cooled if:** Your site has excessive dust, furnace emissions, corrosive gases, high humidity, or if the stabilizer is installed in open outdoor substations. Highly recommended for heavy environments above 100 kVA to 2000 kVA.
 
-By planning with these boundaries, you ensure uninterrupted system efficiency and safety. Our AI Support system and dealer team can draft high-precision spec sheets to match your needs instantly.`,
+By planning with these boundaries, you ensure uninterrupted system efficiency and safety. Our engineering team and authorized dealer network can draft high-precision spec sheets to match your needs instantly.`,
     author: "Ir. Rajeev Sharma (Chief Technology Architect)",
     readTime: "6 mins read",
     publishedAt: "2026-04-18",

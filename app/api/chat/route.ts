@@ -48,10 +48,16 @@ export async function POST(req: NextRequest) {
 
     const encoder = new TextEncoder();
 
-    // Obtain user information
+    // Obtain user information (Restricted to Dealer and Admin Portals)
     const user = getAuthUser(req);
-    const userRole = user?.role || 'customer';
-    const userEmail = user?.email || '';
+    if (!user || (user.role !== 'dealer' && user.role !== 'admin')) {
+        return NextResponse.json(
+            { error: 'AI Assistant access is restricted to authorized Dealer and Admin portals.' },
+            { status: 403 }
+        );
+    }
+    const userRole = user.role;
+    const userEmail = user.email || '';
 
     // Perform semantic retrieval from RAG knowledge base
     let searchResults: any[] = [];

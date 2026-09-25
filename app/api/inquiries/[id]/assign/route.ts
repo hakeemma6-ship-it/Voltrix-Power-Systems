@@ -39,8 +39,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     };
     await persistWrite('inquiries', id, db.inquiries[inquiryIdx]);
 
-    // Send WhatsApp notification to the assigned dealer
-    await sendWhatsAppMessage({
+    // Send WhatsApp notification to the assigned dealer asynchronously so response returns instantly
+    sendWhatsAppMessage({
         to: dealer.phone || '',
         recipientName: dealer.name || 'Dealer Partner',
         type: 'template',
@@ -53,6 +53,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ],
         associatedDealerId: dealerId,
         associatedInquiryId: id
+    }).catch(err => {
+        console.error('[WhatsApp Async Error in inquiry assign]:', err);
     });
 
     // Create a Customer record if one doesn't exist for this inquiry

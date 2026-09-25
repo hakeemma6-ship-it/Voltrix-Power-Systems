@@ -45,14 +45,17 @@ export async function GET() {
         products = db.products || [];
     }
 
-    // Merge products into categories dynamically from the products collection
+    // Merge products into categories dynamically ONLY from the products collection
     const categoriesWithProducts = categories.map((cat: any) => {
         const matchingProducts = products.filter(
-            p => p.categoryId === cat.id || p.categoryId === cat._id || p.category === cat.name
+            p => p.categoryId === cat.id || 
+                 p.categoryId === cat._id || 
+                 (p.category && cat.name && p.category.trim().toLowerCase() === cat.name.trim().toLowerCase()) ||
+                 (p.category && cat.slug && p.category.trim().toLowerCase() === cat.slug.trim().toLowerCase())
         );
         return {
             ...cat,
-            products: (cat.products && cat.products.length > 0) ? cat.products : matchingProducts
+            products: matchingProducts
         };
     });
 

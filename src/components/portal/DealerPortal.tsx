@@ -401,7 +401,7 @@ const PRODUCT_TYPES = [
   'Battery Systems',
   'Online UPS',
   'Hybrid Solar',
-  'Industrial Stabilizers',
+  'Industrial Servo Stabilizers',
   'Other'
 ];
 

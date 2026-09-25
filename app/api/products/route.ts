@@ -19,6 +19,7 @@ export async function GET() {
             return NextResponse.json(products);
         } catch (e) {
             console.error('[Products API] MongoDB query error:', e);
+            return NextResponse.json([]);
         }
     }
 

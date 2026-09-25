@@ -1,19 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, syncDatabaseOnBoot, persistWrite, persistDelete } from '@/lib/db';
+import { db, ensureDb, persistWrite, persistDelete, isMongoReady, getMongoDb } from '@/lib/db';
 import { requireRole } from '@/lib/auth';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-    await syncDatabaseOnBoot();
+    await ensureDb();
     const { id } = await params;
-    const product = db.products.find(p => p.id === id);
-    if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    let product: any = null;
+
+    if (isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            product = await mongoDb.collection('products').findOne({
+                $or: [{ id: id }, { _id: id }]
+            });
+            if (product) {
+                if (product._id && typeof product._id !== 'string') product._id = product._id.toString();
+                if (!product.id) product.id = product._id;
+            }
+        } catch (e) {
+            console.error('[Products [id] API] MongoDB query error:', e);
+        }
+    }
+
+    if (!product && db.products) {
+        product = db.products.find(p => p.id === id || p._id === id);
+    }
+
+    if (!product) {
+        return NextResponse.json({ error: 'Data not found' }, { status: 404 });
+    }
+
     return NextResponse.json(product);
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-    await syncDatabaseOnBoot();
+    await ensureDb();
     const authResult = requireRole(req, ['admin']);
     if (authResult instanceof NextResponse) return authResult;
 
@@ -42,7 +66,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-    await syncDatabaseOnBoot();
+    await ensureDb();
     const authResult = requireRole(req, ['admin']);
     if (authResult instanceof NextResponse) return authResult;
 

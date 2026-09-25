@@ -56,13 +56,13 @@ export default function ApproveDealerCommissionModal({
     const parsedFee = parseFloat(fee);
     const parsedPct = parseFloat(pct);
 
-    if (isNaN(parsedFee) || parsedFee <= 0) {
-      setError('Please enter a valid fixed price per customer greater than ₹0.');
+    if (isNaN(parsedFee) || parsedFee < 0) {
+      setError('Please enter a valid fixed price per customer (₹0 or greater).');
       return;
     }
 
-    if (isNaN(parsedPct) || parsedPct <= 0 || parsedPct > 100) {
-      setError('Please enter a valid commission percentage between 0.1% and 100%.');
+    if (isNaN(parsedPct) || parsedPct < 0 || parsedPct > 100) {
+      setError('Please enter a valid commission percentage between 0% and 100%.');
       return;
     }
 
@@ -150,7 +150,7 @@ export default function ApproveDealerCommissionModal({
               <input
                 type="number"
                 min="0"
-                step="1"
+                step="any"
                 required
                 placeholder="e.g. 15, 25, 50"
                 value={fee}
@@ -189,11 +189,11 @@ export default function ApproveDealerCommissionModal({
             <div className="flex rounded-xl overflow-hidden border-2 border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all bg-white shadow-xs">
               <input
                 type="number"
-                min="0.1"
+                min="0"
                 max="100"
-                step="0.5"
+                step="any"
                 required
-                placeholder="e.g. 10, 12, 15"
+                placeholder="e.g. 5, 10, 12, 15"
                 value={pct}
                 onChange={e => setPct(e.target.value)}
                 className="w-full px-3.5 py-3 text-slate-900 text-sm font-bold placeholder:text-slate-400 bg-transparent focus:outline-none font-mono"

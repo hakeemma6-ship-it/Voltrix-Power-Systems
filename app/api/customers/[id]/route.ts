@@ -229,8 +229,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             await persistWrite('notifications', custNotifId, custNotif);
         }
 
-        // Send WhatsApp notification to the assigned dealer
-        await sendWhatsAppMessage({
+        // Send WhatsApp notification to the assigned dealer asynchronously so response returns instantly
+        sendWhatsAppMessage({
             to: dealer.phone || '',
             recipientName: dealer.name || 'Dealer Partner',
             type: 'template',
@@ -243,6 +243,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             ],
             associatedDealerId: dealerId,
             associatedInquiryId: db.customers[idx].linkedInquiryId || undefined
+        }).catch(err => {
+            console.error('[WhatsApp Async Lead Notification Error]:', err);
         });
 
         return NextResponse.json(sanitizeUser({

@@ -45,13 +45,21 @@ export default function CategoriesPage({ currentHash, onNavigate }: CategoriesPa
   useEffect(() => {
     setIsLoading(true);
     fetch('/api/categories')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return [];
+        return res.json();
+      })
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setCategories(data);
+        } else {
+          setCategories([]);
         }
       })
-      .catch(err => console.error("Error loading categories:", err))
+      .catch(err => {
+        console.error("Error loading categories:", err);
+        setCategories([]);
+      })
       .finally(() => {
         setIsLoading(false);
       });
@@ -61,6 +69,26 @@ export default function CategoriesPage({ currentHash, onNavigate }: CategoriesPa
   const isSubcategoryView = currentHash.startsWith('#categories/');
   const activeSlug = isSubcategoryView ? currentHash.replace('#categories/', '') : null;
   const activeCategory = categories.find(cat => cat.slug === activeSlug);
+
+  if (isSubcategoryView && !isLoading && !activeCategory) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center space-y-4 font-sans">
+        <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto border border-amber-200">
+          <AlertCircle className="h-8 w-8 text-amber-600" />
+        </div>
+        <h2 className="text-2xl font-black text-[#0A2342] uppercase tracking-tight">Data Not Found</h2>
+        <p className="text-sm text-slate-500">
+          The requested category <span className="font-mono font-bold text-slate-700">&quot;{activeSlug}&quot;</span> could not be found in our database.
+        </p>
+        <button
+          onClick={() => onNavigate('#categories')}
+          className="px-6 py-2.5 bg-brand-green hover:bg-emerald-600 text-white font-bold text-xs uppercase rounded-xl transition cursor-pointer border-none"
+        >
+          Back to Categories
+        </button>
+      </div>
+    );
+  }
 
 
   if (isLoading) {
@@ -234,74 +262,91 @@ export default function CategoriesPage({ currentHash, onNavigate }: CategoriesPa
           </div>
         </div>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {categoryProducts.map((product) => (
-            <motion.div
-              key={product.id}
-              variants={itemVariants}
-              className="relative bg-white rounded-2xl border-2  shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] overflow-hidden flex flex-col transition-all group"
+        {categoryProducts.length === 0 ? (
+          <div className="text-center py-20 border border-slate-200 rounded-3xl bg-white shadow-xs p-8 max-w-xl mx-auto space-y-3 font-sans">
+            <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-2" />
+            <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Data Not Found</h3>
+            <p className="text-slate-500 text-xs">
+              No products currently found in the database for {activeCategory.name}.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate('#categories')}
+              className="mt-3 px-5 py-2.5 bg-[#0A2342] hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl transition cursor-pointer border-none"
             >
-              {/* Product Image */}
-              {product.image && (
-                <div className="h-40 w-full overflow-hidden relative bg-white border-b border-slate-100 z-10 shrink-0">
-                  <img
-                    src={resolveImageUrl(product.image)}
-                    alt={product.name}
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.src.includes('Oil%20Cooled') && !target.src.includes('Stabilizer')) {
-                        target.src = 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866584/voltrix_power_systems/Oil_Cooled_Stabilizer.png';
-                      }
-                    }}
-                    className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500"
-                  />
-                </div>
-              )}
+              Back to Categories
+            </button>
+          </div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {categoryProducts.map((product) => (
+              <motion.div
+                key={product.id}
+                variants={itemVariants}
+                className="relative bg-white rounded-2xl border-2  shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] overflow-hidden flex flex-col transition-all group"
+              >
+                {/* Product Image */}
+                {product.image && (
+                  <div className="h-40 w-full overflow-hidden relative bg-white border-b border-slate-100 z-10 shrink-0">
+                    <img
+                      src={resolveImageUrl(product.image)}
+                      alt={product.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes('Oil%20Cooled') && !target.src.includes('Stabilizer')) {
+                          target.src = 'https://res.cloudinary.com/a6ppmzjz/image/upload/v1789866584/voltrix_power_systems/Oil_Cooled_Stabilizer.png';
+                        }
+                      }}
+                      className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500"
+                    />
+                  </div>
+                )}
 
-              <div className="p-6 flex-grow flex flex-col justify-between relative z-10">
-                <div>
-                  <h3 className="font-sans font-black text-lg text-[#0A2342] mb-2 uppercase tracking-tight">
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed mb-4 line-clamp-3">
-                    {product.description}
-                  </p>
+                <div className="p-6 flex-grow flex flex-col justify-between relative z-10">
+                  <div>
+                    <h3 className="font-sans font-black text-lg text-[#0A2342] mb-2 uppercase tracking-tight">
+                      {product.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed mb-4 line-clamp-3">
+                      {product.description}
+                    </p>
 
-                  <div className="space-y-2 mb-6">
-                    <div className="text-[10px] uppercase font-mono font-black text-slate-400 border-b border-dashed border-slate-200 pb-1">
-                      Technical Specs Highlight
-                    </div>
-                    {product.specs && Object.entries(product.specs).slice(0, 4).map(([key, val]) => (
-                      <div key={key} className="flex justify-between text-xs">
-                        <span className="text-slate-400 font-medium">{key}:</span>
-                        <span className="text-[#0a2342] font-semibold">{String(val)}</span>
+                    <div className="space-y-2 mb-6">
+                      <div className="text-[10px] uppercase font-mono font-black text-slate-400 border-b border-dashed border-slate-200 pb-1">
+                        Technical Specs Highlight
                       </div>
-                    ))}
+                      {product.specs && Object.entries(product.specs).slice(0, 4).map(([key, val]) => (
+                        <div key={key} className="flex justify-between text-xs">
+                          <span className="text-slate-400 font-medium">{key}:</span>
+                          <span className="text-[#0a2342] font-semibold">{String(val)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+                    <button
+                      onClick={() => {
+                        // Navigate to flat products list and trigger product selection
+                        onNavigate(`#products/${product.id}`);
+                      }}
+                      className="h-9 px-4 w-full bg-brand-green hover:bg-green-100 hover:text-black rounded text-xs font-bold uppercase tracking-wider text-white font-sans cursor-pointer transition-all border-none flex items-center justify-center gap-1.5"
+                    >
+                      <span>View Specifications</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
-                  <button
-                    onClick={() => {
-                      // Navigate to flat products list and trigger product selection
-                      onNavigate(`#products/${product.id}`);
-                    }}
-                    className="h-9 px-4 w-full bg-brand-green hover:bg-green-100 hover:text-black rounded text-xs font-bold uppercase tracking-wider text-white font-sans cursor-pointer transition-all border-none flex items-center justify-center gap-1.5"
-                  >
-                    <span>View Specifications</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     );
   }
@@ -315,76 +360,87 @@ export default function CategoriesPage({ currentHash, onNavigate }: CategoriesPa
         </h1>
       </div>
 
-      <motion.div
-        className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {categories.map((cat) => {
-          const CatIcon = getCategoryIcon(cat.slug);
-          const catImg = getCategoryImage(cat.slug) || cat.image;
-          const imgSrc = catImg && typeof catImg === 'object' && 'src' in (catImg as any) ? (catImg as any).src : (catImg || '');
-          return (
-            <motion.div
-              key={cat.id}
-              variants={itemVariants}
-              onClick={() => onNavigate(`#categories/${cat.slug}`)}
-              className="group relative overflow-hidden rounded-3xl bg-slate-950 aspect-[3/4] xs:aspect-[10/13] sm:aspect-[4/5] shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-800/80 cursor-pointer animate-fade-in"
-            >
-              {/* Glow Accent Border */}
-              <div className="absolute -inset-px rounded-3xl border border-transparent group-hover:border-emerald-500/25 transition-all duration-300 z-30 pointer-events-none" />
+      {categories.length === 0 ? (
+        <div className="text-center py-20 border border-slate-200 rounded-3xl bg-white shadow-xs p-8 max-w-xl mx-auto space-y-3 font-sans">
+          <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-2" />
+          <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Data Not Found</h3>
+          <p className="text-slate-500 text-xs">
+            No categories currently available in the database.
+          </p>
+        </div>
+      ) : (
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {categories.map((cat) => {
+            const CatIcon = getCategoryIcon(cat.slug);
+            const catImg = getCategoryImage(cat.slug) || cat.image;
+            const imgSrc = catImg && typeof catImg === 'object' && 'src' in (catImg as any) ? (catImg as any).src : (catImg || '');
+            const prodCount = (cat.products || []).length;
+            return (
+              <motion.div
+                key={cat.id}
+                variants={itemVariants}
+                onClick={() => onNavigate(`#categories/${cat.slug}`)}
+                className="group relative overflow-hidden rounded-3xl bg-slate-950 aspect-[3/4] xs:aspect-[10/13] sm:aspect-[4/5] shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-800/80 cursor-pointer animate-fade-in"
+              >
+                {/* Glow Accent Border */}
+                <div className="absolute -inset-px rounded-3xl border border-transparent group-hover:border-emerald-500/25 transition-all duration-300 z-30 pointer-events-none" />
 
-              {/* Background Image Banner */}
-              <img
-                src={imgSrc}
-                alt={cat.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-60 group-hover:opacity-75 z-0"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-              />
+                {/* Background Image Banner */}
+                <img
+                  src={imgSrc}
+                  alt={cat.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-60 group-hover:opacity-75 z-0"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                />
 
-              {/* Dynamic Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-900/10 z-10 transition-all duration-500" />
+                {/* Dynamic Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-900/10 z-10 transition-all duration-500" />
 
-              {/* Card Contents */}
-              <div className="relative z-20 h-full p-3 xs:p-4 sm:p-6 flex flex-col justify-between text-left">
-                {/* Header Row */}
-                <div className="flex justify-between items-start">
-                  <span className="text-[7.5px] xs:text-[9.5px] sm:text-xs font-bold text-white tracking-widest uppercase bg-brand-green px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
-                    {cat.slug === 'amc-services' ? 'Services' : 'Category'}
-                  </span>
-                  <div className="p-1.5 sm:p-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 text-emerald-450 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                    <CatIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                {/* Card Contents */}
+                <div className="relative z-20 h-full p-3 xs:p-4 sm:p-6 flex flex-col justify-between text-left">
+                  {/* Header Row */}
+                  <div className="flex justify-between items-start">
+                    <span className="text-[7.5px] xs:text-[9.5px] sm:text-xs font-bold text-white tracking-widest uppercase bg-brand-green px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
+                      {cat.slug === 'amc-services' ? 'Services' : 'Category'}
+                    </span>
+                    <div className="p-1.5 sm:p-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 text-emerald-450 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                      <CatIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                    </div>
+                  </div>
+
+                  {/* Footer Details Info */}
+                  <div>
+                    <div className="space-y-1 sm:space-y-2">
+                      <h2 className="text-xs xs:text-base sm:text-2xl font-black uppercase tracking-tight text-white group-hover:text-emerald-400 transition-colors duration-300 leading-tight">
+                        {cat.name}
+                      </h2>
+                      <p className="hidden xs:block line-clamp-2 text-[9.5px] sm:text-xs text-slate-300 leading-relaxed font-normal">
+                        {cat.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 sm:pt-4 mt-2 sm:mt-4 border-t border-white/10 flex items-center justify-between text-[6.5px] xs:text-[9px] sm:text-xs select-none">
+                      <span className="font-mono text-slate-400 font-bold uppercase tracking-wider">
+                        {prodCount} <span className="hidden xs:inline">PORTFOLIO</span> SIZES
+                      </span>
+                      <span className="text-emerald-400 group-hover:translate-x-1 transition-transform duration-300 flex items-center gap-0.5 sm:gap-1 font-black uppercase text-[7px] xs:text-[9px] sm:text-[11px]">
+                        <span>SELECT</span>
+                        <ArrowRight className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 stroke-[2.5]" />
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                {/* Footer Details Info */}
-                <div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <h2 className="text-xs xs:text-base sm:text-2xl font-black uppercase tracking-tight text-white group-hover:text-emerald-400 transition-colors duration-300 leading-tight">
-                      {cat.name}
-                    </h2>
-                    <p className="hidden xs:block line-clamp-2 text-[9.5px] sm:text-xs text-slate-300 leading-relaxed font-normal">
-                      {cat.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 sm:pt-4 mt-2 sm:mt-4 border-t border-white/10 flex items-center justify-between text-[6.5px] xs:text-[9px] sm:text-xs select-none">
-                    <span className="font-mono text-slate-400 font-bold uppercase tracking-wider">
-                      {cat.products.length} <span className="hidden xs:inline">PORTFOLIO</span> SIZES
-                    </span>
-                    <span className="text-emerald-400 group-hover:translate-x-1 transition-transform duration-300 flex items-center gap-0.5 sm:gap-1 font-black uppercase text-[7px] xs:text-[9px] sm:text-[11px]">
-                      <span>SELECT</span>
-                      <ArrowRight className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 stroke-[2.5]" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -397,7 +453,7 @@ interface AmcServicesOverviewProps {
 function AmcServicesOverview({ activeCategory, onNavigate }: AmcServicesOverviewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredServices = activeCategory.products.filter(service =>
+  const filteredServices = (activeCategory.products || []).filter(service =>
     service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     service.description.toLowerCase().includes(searchTerm.toLowerCase())
   );

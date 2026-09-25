@@ -461,7 +461,7 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
                                             <input
                                                 type="number"
                                                 min={0}
-                                                step={1}
+                                                step="any"
                                                 placeholder="e.g. 5, 10, 15"
                                                 className="w-full text-sm font-bold text-slate-900 bg-transparent focus:outline-none font-mono"
                                                 value={custFeeInput}
@@ -484,7 +484,7 @@ export default function DealerDetailModal({ dealer, onClose, onUpdate }: Props) 
                                                 type="number"
                                                 min={0}
                                                 max={100}
-                                                step={0.5}
+                                                step="any"
                                                 placeholder="e.g. 10, 15"
                                                 className="w-full text-sm font-bold text-slate-900 bg-transparent focus:outline-none font-mono"
                                                 value={commPctInput}
