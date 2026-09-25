@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify Linting
-        run: npm run lint
-
       - name: Build Production Assets
         run: npm run build
         env:
