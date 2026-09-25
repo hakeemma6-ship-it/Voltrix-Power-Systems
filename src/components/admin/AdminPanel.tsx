@@ -155,8 +155,18 @@ function CustomersTab({ dealers }: { dealers: any[] }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/customers', { headers });
-      if (res.ok) setCustomers(await res.json());
+      const currentToken = typeof window !== 'undefined' ? localStorage.getItem('voltrix_auth_token') : '';
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {})
+      };
+      const res = await fetch('/api/customers', { headers: authHeaders });
+      if (res.ok) {
+        const data = await res.json();
+        setCustomers(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('Failed to load customers:', e);
     } finally { setLoading(false); }
   }, []);
 
@@ -412,7 +422,7 @@ function CustomersTab({ dealers }: { dealers: any[] }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filtered.slice((page - 1) * 10, page * 10).map(c => (
               <div
-                key={c.id}
+                key={c.id || c._id}
                 onClick={() => setSelectedCustomer(c)}
                 className="bg-white border-2 border-slate-100 rounded-2xl p-5 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group"
               >

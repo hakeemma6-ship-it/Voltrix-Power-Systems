@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, syncDatabaseOnBoot, persistWrite } from '@/lib/db';
+import { db, syncDatabaseOnBoot, persistWrite, isMongoReady, getMongoDb } from '@/lib/db';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { getAuthUser } from '@/lib/auth';
 import { normalizePhoneNumber } from '@/lib/phone';
@@ -12,6 +12,23 @@ export async function GET(req: NextRequest) {
   const user = getAuthUser(req);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (isMongoReady()) {
+    const mongoDb = getMongoDb();
+    try {
+      const remoteDeals = await mongoDb.collection('deal_closures').find({}).toArray();
+      if (remoteDeals) {
+        db.deal_closures = remoteDeals.map((d: any) => {
+          const doc = { ...d };
+          if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+          if (!doc.id) doc.id = doc._id;
+          return doc;
+        });
+      }
+    } catch (err) {
+      console.error('[GET /api/deals] MongoDB read error:', err);
+    }
   }
 
   const url = new URL(req.url);

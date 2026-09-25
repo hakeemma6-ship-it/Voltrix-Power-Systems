@@ -3,7 +3,7 @@
  * POST /api/customers       — Admin: create a customer manually
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { db, persistWrite, ensureDb, resolveCustomerCategory, deduplicateCustomers } from '@/lib/db';
+import { db, persistWrite, ensureDb, resolveCustomerCategory, deduplicateCustomers, isMongoReady, getMongoDb, escapeRegExp } from '@/lib/db';
 import { requireRole, generateSecureToken, hashToken, sanitizeUser } from '@/lib/auth';
 import { normalizePhoneNumber } from '@/lib/phone';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
@@ -59,6 +59,35 @@ export async function GET(req: NextRequest) {
     if (authResult instanceof NextResponse) return authResult;
     const { user } = authResult;
 
+    if (isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            const [remoteData, remoteDeals] = await Promise.all([
+                mongoDb.collection('customers').find({}).toArray().catch(() => []),
+                mongoDb.collection('deal_closures').find({}).toArray().catch(() => [])
+            ]);
+            if (remoteData) {
+                const clean = remoteData.map((c: any) => {
+                    const doc = { ...c };
+                    if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                    if (!doc.id) doc.id = doc._id;
+                    return doc;
+                });
+                db.customers = clean;
+            }
+            if (remoteDeals) {
+                db.deal_closures = remoteDeals.map((d: any) => {
+                    const doc = { ...d };
+                    if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                    if (!doc.id) doc.id = doc._id;
+                    return doc;
+                });
+            }
+        } catch (err) {
+            console.error('[GET /api/customers] MongoDB read error:', err);
+        }
+    }
+
     if (!db.customers) db.customers = [];
 
     const deduped = deduplicateCustomers(db.customers);
@@ -69,7 +98,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Dealer: only see their assigned customers
-    const dealer = db.dealers.find((d: any) => d.email.toLowerCase() === user.email.toLowerCase());
+    let dealer = db.dealers?.find((d: any) => d.email && d.email.toLowerCase() === user.email.toLowerCase());
+    if (!dealer && isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            dealer = await mongoDb.collection('dealers').findOne({ email: new RegExp(`^${escapeRegExp(user.email)}$`, 'i') });
+        } catch { }
+    }
     if (!dealer) return NextResponse.json([]);
     const resolved = deduped
         .filter((c: any) =>

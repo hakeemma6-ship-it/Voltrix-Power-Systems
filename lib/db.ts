@@ -496,26 +496,90 @@ export async function bootstrapDatabase(): Promise<void> {
             await initDbConnection();
             await ensureAdminUser();
 
-            // Load categories and products directly from MongoDB collections (Single Source of Truth)
+            // Load core collections directly from MongoDB collections (Single Source of Truth)
             const mongoDb = getMongoDb();
             if (isMongoReady() && mongoDb) {
-                const [dbCats, dbProds] = await Promise.all([
-                    mongoDb.collection('categories').find({}).toArray(),
-                    mongoDb.collection('products').find({}).toArray()
+                const [dbCats, dbProds, dbCusts, dbDealers, dbInqs, dbDeals, dbSettings, dbUsers] = await Promise.all([
+                    mongoDb.collection('categories').find({}).toArray().catch(() => []),
+                    mongoDb.collection('products').find({}).toArray().catch(() => []),
+                    mongoDb.collection('customers').find({}).toArray().catch(() => []),
+                    mongoDb.collection('dealers').find({}).toArray().catch(() => []),
+                    mongoDb.collection('inquiries').find({}).toArray().catch(() => []),
+                    mongoDb.collection('deal_closures').find({}).toArray().catch(() => []),
+                    mongoDb.collection('settings').find({}).toArray().catch(() => []),
+                    mongoDb.collection('Admin').find({}).toArray().catch(() => [])
                 ]);
-                db.categories = dbCats.map((c: any) => {
-                    const doc = { ...c };
-                    if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
-                    if (!doc.id) doc.id = doc._id;
-                    return doc;
-                });
-                db.products = dbProds.map((p: any) => {
-                    const doc = { ...p };
-                    if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
-                    if (!doc.id) doc.id = doc._id;
-                    return doc;
-                });
-                console.log(`[DB] Loaded ${db.categories.length} categories and ${db.products.length} products directly from MongoDB.`);
+                if (dbCats && dbCats.length > 0) {
+                    db.categories = dbCats.map((c: any) => {
+                        const doc = { ...c };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                }
+                if (dbProds && dbProds.length > 0) {
+                    db.products = dbProds.map((p: any) => {
+                        const doc = { ...p };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                }
+                if (dbCusts) {
+                    const cleanCusts = dbCusts.map((c: any) => {
+                        const doc = { ...c };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                    db.customers = deduplicateCustomers(cleanCusts);
+                }
+                if (dbDealers) {
+                    const cleanDealers = dbDealers.map((d: any) => {
+                        const doc = { ...d };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                    db.dealers = deduplicateDealers(cleanDealers);
+                }
+                if (dbInqs) {
+                    db.inquiries = dbInqs.map((i: any) => {
+                        const doc = { ...i };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                }
+                if (dbDeals) {
+                    db.deal_closures = dbDeals.map((d: any) => {
+                        const doc = { ...d };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                }
+                if (dbSettings && dbSettings.length > 0) {
+                    db.settings = dbSettings.map((s: any) => {
+                        const doc = { ...s };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                }
+                if (dbUsers && dbUsers.length > 0) {
+                    const adminFound = db.users?.find((u: any) => u.role === 'admin');
+                    db.users = dbUsers.map((u: any) => {
+                        const doc = { ...u };
+                        if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                        if (!doc.id) doc.id = doc._id;
+                        return doc;
+                    });
+                    if (adminFound && !db.users.some((u: any) => u.role === 'admin')) {
+                        db.users.push(adminFound);
+                    }
+                }
+                console.log(`[DB] Loaded ${db.customers.length} customers, ${db.categories.length} categories, and ${db.products.length} products directly from MongoDB.`);
             }
 
             state.ready = true;

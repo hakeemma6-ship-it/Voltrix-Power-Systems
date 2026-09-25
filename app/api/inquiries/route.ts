@@ -3,7 +3,7 @@
  * POST /api/inquiries  — Public: submit inquiry form (no auth required)
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { db, persistWrite, ensureDb } from '@/lib/db';
+import { db, persistWrite, ensureDb, isMongoReady, getMongoDb } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import type { Inquiry } from '@/types';
 import { sendWhatsAppMessage, sendAdminWhatsAppMessage } from '@/lib/whatsapp';
@@ -12,6 +12,23 @@ export async function GET(req: NextRequest) {
     await ensureDb();
     const user = getAuthUser(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            const remoteInqs = await mongoDb.collection('inquiries').find({}).toArray();
+            if (remoteInqs) {
+                db.inquiries = remoteInqs.map((i: any) => {
+                    const doc = { ...i };
+                    if (doc._id && typeof doc._id !== 'string') doc._id = doc._id.toString();
+                    if (!doc.id) doc.id = doc._id;
+                    return doc;
+                });
+            }
+        } catch (err) {
+            console.error('[GET /api/inquiries] MongoDB read error:', err);
+        }
+    }
 
     if (user.role === 'admin') {
         return NextResponse.json(db.inquiries || []);

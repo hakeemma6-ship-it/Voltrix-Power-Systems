@@ -8,7 +8,7 @@
  *   'generate_password' — generate login credentials for customer after order is placed
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { db, persistWrite, syncDatabaseOnBoot, resolveCustomerCategory } from '@/lib/db';
+import { db, persistWrite, syncDatabaseOnBoot, resolveCustomerCategory, isMongoReady, getMongoDb } from '@/lib/db';
 import { requireRole, sanitizeUser, generateSecureToken, hashToken } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
@@ -22,7 +22,24 @@ export async function GET(req: NextRequest, { params }: Params) {
     if (authResult instanceof NextResponse) return authResult;
 
     if (!db.customers) db.customers = [];
-    const customer = db.customers.find((c: any) => c.id === id);
+    let customer = db.customers.find((c: any) => c.id === id || c._id === id);
+    if (!customer && isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            const doc = await mongoDb.collection('customers').findOne({
+                $or: [{ id }, { _id: id }]
+            });
+            if (doc) {
+                const clean = { ...doc };
+                if (clean._id && typeof clean._id !== 'string') clean._id = clean._id.toString();
+                if (!clean.id) clean.id = clean._id;
+                db.customers.push(clean);
+                customer = clean;
+            }
+        } catch (err) {
+            console.error('[GET /api/customers/[id]] MongoDB read error:', err);
+        }
+    }
     if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
 
     const { user } = authResult;
@@ -56,7 +73,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { user } = authResult;
 
     if (!db.customers) db.customers = [];
-    const idx = db.customers.findIndex((c: any) => c.id === id);
+    let idx = db.customers.findIndex((c: any) => c.id === id || c._id === id);
+    if (idx === -1 && isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            const doc = await mongoDb.collection('customers').findOne({
+                $or: [{ id }, { _id: id }]
+            });
+            if (doc) {
+                const clean = { ...doc };
+                if (clean._id && typeof clean._id !== 'string') clean._id = clean._id.toString();
+                if (!clean.id) clean.id = clean._id;
+                db.customers.push(clean);
+                idx = db.customers.length - 1;
+            }
+        } catch (err) {
+            console.error('[PATCH /api/customers/[id]] MongoDB read error:', err);
+        }
+    }
     if (idx === -1) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
 
     const body = await req.json();
@@ -406,11 +440,26 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     if (authResult instanceof NextResponse) return authResult;
 
     if (!db.customers) db.customers = [];
-    const idx = db.customers.findIndex((c: any) => c.id === id);
+    let idx = db.customers.findIndex((c: any) => c.id === id || c._id === id);
+    if (idx === -1 && isMongoReady()) {
+        const mongoDb = getMongoDb();
+        try {
+            const doc = await mongoDb.collection('customers').findOne({
+                $or: [{ id }, { _id: id }]
+            });
+            if (doc) {
+                const clean = { ...doc };
+                if (clean._id && typeof clean._id !== 'string') clean._id = clean._id.toString();
+                if (!clean.id) clean.id = clean._id;
+                db.customers.push(clean);
+                idx = db.customers.length - 1;
+            }
+        } catch { }
+    }
     if (idx === -1) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
 
     const customer = db.customers[idx];
-    const customerId = customer.id;
+    const customerId = customer.id || id;
     const customerEmail = customer.email?.toLowerCase();
     const customerPhone = customer.phone;
     const linkedInquiryId = customer.linkedInquiryId;
@@ -453,12 +502,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     }
 
     // MongoDB clean up
-    const mongoDb = (global as any).__voltrix_mongoDb;
-    if (mongoDb) {
+    const mongoDb = getMongoDb();
+    if (isMongoReady() && mongoDb) {
         try {
-            await mongoDb.collection('customers').deleteOne({ _id: customerId });
+            await mongoDb.collection('customers').deleteMany({
+                $or: [{ _id: customerId }, { id: customerId }, { _id: id }, { id }]
+            });
 
-            await mongoDb.collection('deal_closures').deleteMany({ customerId });
+            await mongoDb.collection('deal_closures').deleteMany({
+                $or: [{ customerId }, { customerId: id }]
+            });
             if (inquiryIdsToDelete.length > 0) {
                 await mongoDb.collection('inquiries').deleteMany({ _id: { $in: inquiryIdsToDelete } });
             }
